@@ -26,44 +26,28 @@ export default function Index({}: Props) {
   const appect = () => {
     setIsChekced(!isChecked);
   };
-  const goRegister = () => {
-    history.push("/register");
+  const goLogin = () => {
+    history.push("/login");
   };
-  const goForget = () => {
-    history.push("/forget");
-  };
-
   return (
-    <div className="login-container">
+    <div className="register-container">
       <HeaderComponent />
       <div className="login-content">
-        <div className="login-box-left">
-          <div className="left-font">Hello!</div>
-          <div className="left-font">欢迎使用Anyconf</div>
-          <div className="left-img">
-            <img
-              src={loginImg}
-              alt=""
-              className="left-image"
-            />
-          </div>
-        </div>
         <div className="login-box-right">
-          <div className="right-top-login">登录</div>
+          <div className="right-top-login">注册</div>
           <div className="right-top-register">
-            <div className="no-register">未注册</div>
+            <div className="no-register">已有账号？</div>
             <div
               className="go-register"
-              onClick={goRegister}
+              onClick={goLogin}
             >
-              去注册账号
+              去账号登录
             </div>
           </div>
           <div className="right-from">
             <Form
               name="basic"
               wrapperCol={{ span: 21 }}
-              initialValues={{ remember: true }}
               onFinish={onFinish}
               onFinishFailed={onFinishFailed}
               autoComplete="off"
@@ -71,11 +55,11 @@ export default function Index({}: Props) {
             >
               <Form.Item
                 name="username"
-                rules={[{ required: true, message: "请输入您的账号" }]}
+                rules={[{ required: true, message: "请输入您的手机号" }]}
               >
                 <Input
                   style={{ height: "40px", paddingLeft: "25px" }}
-                  placeholder="请输入您的账号"
+                  placeholder="请输入您的手机号"
                 />
               </Form.Item>
               <img
@@ -83,6 +67,20 @@ export default function Index({}: Props) {
                 alt=""
                 className="user-icon"
               />
+              <Form.Item
+                name="rule"
+                rules={[{ required: true, message: "请输入验证码" }]}
+              >
+                <Input
+                  style={{
+                    height: "40px",
+                    width: "256px",
+                    marginLeft: "-138px",
+                  }}
+                  placeholder="请输入验证码"
+                />
+              </Form.Item>
+              <Button className="btn-send">发送验证码</Button>
               <Form.Item
                 name="password"
                 rules={[
@@ -100,7 +98,7 @@ export default function Index({}: Props) {
               >
                 <Input.Password
                   style={{ height: "40px", paddingLeft: "25px" }}
-                  placeholder="请输入密码"
+                  placeholder="密码由8-16位大/小写英文字母和数字组成"
                 />
               </Form.Item>
               <img
@@ -109,30 +107,30 @@ export default function Index({}: Props) {
                 className="pass-icon"
               />
               <Form.Item
-                name="rule"
+                name="passwordAgain"
                 rules={[
                   {
                     required: true,
-                    message: "请输入验证码",
+                    message: "请再次输入密码",
+                  },
+                  {
+                    pattern: new RegExp(
+                      /^(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{8,16}$/
+                    ),
+                    message: "格式错误，密码由8-16位大/小写英文字母和数字组成",
                   },
                 ]}
               >
-                <Input
+                <Input.Password
                   style={{ height: "40px", paddingLeft: "25px" }}
-                  placeholder="请输入验证码"
+                  placeholder="请再次输入密码"
                 />
               </Form.Item>
               <img
-                src={ruleIcon}
+                src={passwordIcon}
                 alt=""
                 className="rule-icon"
               />
-              <div
-                className="right-forget"
-                onClick={goForget}
-              >
-                忘记密码?
-              </div>
               <div className="right-accect-box">
                 <div className="right-icon-box">
                   {!isChecked ? (
@@ -160,15 +158,15 @@ export default function Index({}: Props) {
                 <Button
                   type="primary"
                   htmlType="submit"
-                  className="submit-button"
+                  className="submit-buttons"
                   style={{
                     background: "#0039B3",
                     width: "100%",
                     height: "40px",
-                    marginTop: "24px",
+                    marginTop: "30px",
                   }}
                 >
-                  登录
+                  注册
                 </Button>
               </Form.Item>
             </Form>

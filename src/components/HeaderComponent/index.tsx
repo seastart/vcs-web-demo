@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import "./index.scss";
 import type { MenuProps } from "antd";
-import { Avatar, Dropdown } from "antd";
+import { Avatar, Dropdown, Modal } from "antd";
 import { UserOutlined, DownOutlined } from "@ant-design/icons";
+import logoIcon from "../../assets/common/logo.png";
+import dayuIcon from "../../assets/common/dayu.png";
+
 type Props = {};
 interface DropdownItem {
   key: string;
@@ -10,6 +13,17 @@ interface DropdownItem {
 }
 export default function Index({}: Props) {
   const [items, setItems] = useState<MenuProps["items"]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const openModle = () => {
+    setIsModalOpen(true);
+  };
+  const handleOk = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
   useEffect(() => {
     //初始化调用，拿到下拉菜单
     let dropDwonArr = [
@@ -20,6 +34,7 @@ export default function Index({}: Props) {
             target="_blank"
             rel="noopener noreferrer"
             style={{ fontSize: "14px" }}
+            onClick={openModle}
           >
             我的云录刻
           </a>
@@ -43,7 +58,12 @@ export default function Index({}: Props) {
   return (
     <div className="header-container">
       <div className="header-content">
-        <div className="header-icon-box">1</div>
+        <div className="header-icon-box">
+          <img
+            src={logoIcon}
+            alt=""
+          />
+        </div>
         <div className="header-avatar-box">
           <div className="avatar">
             <Avatar icon={<UserOutlined />} />
@@ -60,6 +80,33 @@ export default function Index({}: Props) {
           </div>
         </div>
       </div>
+      <Modal
+        title="我的云录刻"
+        open={isModalOpen}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        className="headers-modal"
+        footer={null}
+      >
+        <div className="headers-modal-content">
+          <div className="headers-modal-box">
+            <div className="headers-box-left">
+              <div className="headers-left-top">某某某的个人会议室</div>
+              <div className="headers-left-bottom">
+                <span>会议ID:89653682</span>
+                <span>|</span>
+                <span>会议ID:89653682</span>
+              </div>
+            </div>
+            <div className="headers-box-right">
+              <img
+                src={dayuIcon}
+                alt=""
+              />
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
