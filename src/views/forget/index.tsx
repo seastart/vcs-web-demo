@@ -30,7 +30,7 @@ export default function Index({}: Props) {
     history.push("/login");
   };
   return (
-    <div className="register-container">
+    <div className="forget-container">
       <HeaderComponent />
       <div className="login-content">
         <div className="login-box-right">

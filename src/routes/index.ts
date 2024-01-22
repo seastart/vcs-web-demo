@@ -3,6 +3,7 @@ import HomePage from "../views/homePage";
 import Login from "../views/login";
 import Register from "../views/register";
 import Forget from "../views/forget";
+import Room from "../views/room";
 const routes: RouteConfig = [
   {
     path: "/",
@@ -20,6 +21,10 @@ const routes: RouteConfig = [
   {
     path: "/forget",
     component: Forget,
+  },
+  {
+    path: "/room",
+    component: Room,
   },
 ];
 export default routes;

@@ -1,0 +1,196 @@
+.room-container {
+  width: 100%;
+  height: 100vh;
+  overflow-y: hidden;
+  .room-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+
+    .room-left-box {
+      width: 80%;
+      .left-top {
+        width: 100%;
+        height: 5%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        .top-left-img {
+          width: 16px;
+          height: 16px;
+          margin-left: 30px;
+          margin-right: auto; /* 添加此行来左对齐图片 */
+        }
+        .left-top-text {
+          flex-grow: 1; /* 添加此行使文本居中 */
+          text-align: center; /* 确保文本在其容器内居中 */
+          font-size: 16px;
+          color: #999;
+        }
+      }
+      .video-box {
+        width: 100%;
+        height: 82%;
+        display: flex;
+        .video {
+          min-width: 80%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background-color: #1a1c22;
+          .video-box-flex {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            .video-avatar {
+            }
+            .video-icon-box {
+              margin-top: 10px;
+              color: #fff;
+              font-size: 14px;
+            }
+          }
+          .video-shou {
+            width: 20px;
+            height: 46px;
+          }
+        }
+        .video-right {
+          width: 20%;
+          background-color: yellowgreen;
+        }
+        .video-close {
+          min-width: 84%;
+        }
+        //展开之后
+        .video-hide {
+          width: 100%;
+        }
+        .video-right-hide {
+          width: 0;
+        }
+      }
+      .room-left-bottom {
+        width: 100%;
+        height: 64px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        .left-bottom-left {
+          display: flex;
+          align-items: center;
+          margin-left: 24px;
+          .red-point {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ff4b51;
+            margin-bottom: 6px;
+          }
+          .left-point-text {
+            font-size: 14px;
+            color: #999;
+            margin-left: 4px;
+            margin-bottom: 6px;
+          }
+        }
+        .left-bottom-moddle {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-left: -100px;
+          img {
+            width: 30px;
+            height: 30px;
+          }
+          .img-box-bottom {
+            margin-left: 30px;
+            margin-bottom: 6px;
+          }
+        }
+        .left-bottom-right {
+          margin-right: 20px;
+          width: 110px;
+          height: 32px;
+          font-size: 14px;
+          color: #fff;
+          background-color: #ff4b51;
+          border: 1px solid #ff4b51;
+          border-radius: 4px 4px 4px 4px;
+          margin-bottom: 6px;
+        }
+      }
+    }
+    // 收起后的宽度
+    .room-left-box-close {
+      min-width: 100% !important;
+    }
+    .room-right-box {
+      width: 20%;
+      .room-right-top {
+        width: 100%;
+        height: 5%;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 20px;
+        align-items: center;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-right: none;
+        .right-top-text {
+          font-size: 16px;
+          color: #333;
+          font-weight: 700;
+        }
+        .right-top-close {
+          font-size: 30px;
+          color: #333;
+          line-height: 30px;
+          margin-bottom: 6px;
+        }
+      }
+      .room-right-content {
+        width: 100%;
+        height: 82%;
+        padding: 20px 16px 20px 20px;
+        .right-name-box {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          width: 100%;
+          .right-name {
+            margin-left: 8px;
+            font-size: 14px;
+            color: #333;
+          }
+          .right-icon {
+            display: flex;
+            justify-content: flex-end;
+            margin-left: auto;
+            img {
+              margin-left: 16px;
+            }
+          }
+        }
+      }
+      .room-right-bottom {
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+
+        .right-bottom-button {
+          width: 176px;
+          height: 32px;
+          margin-bottom: 7px;
+          border-radius: 4px 4px 4px 4px;
+        }
+      }
+    }
+    .room-right-box-close {
+      width: 0 !important;
+    }
+  }
+}

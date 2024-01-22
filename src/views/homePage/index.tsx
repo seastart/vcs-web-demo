@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import HeaderComponent from "../../components/HeaderComponent";
+import { useHistory } from "react-router-dom";
 import "./index.scss";
 import jishiIcon from "../../assets/common/home-page-jishi.png";
 import jiaruIcon from "../../assets/common/home-page-jiaru.png";
@@ -13,6 +14,7 @@ import { Button, Input, Modal } from "antd";
 type Props = {};
 
 export default function Index({}: Props) {
+  const history = useHistory();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSheXiang, setIsSheXiang] = useState(false);
   const [isYuYin, setIsyuyin] = useState(false);
@@ -20,6 +22,7 @@ export default function Index({}: Props) {
   const [isMeetingStatus, setIsMeetingStatus] = useState(0);
   const handleOk = () => {
     setIsModalOpen(false);
+    history.push("/room");
   };
 
   const handleCancel = () => {
@@ -163,10 +166,16 @@ export default function Index({}: Props) {
             </div>
           </div>
           <div className="modal-btn-box">
-            <Button className="modal-btn-left">取消</Button>
+            <Button
+              className="modal-btn-left"
+              onClick={handleCancel}
+            >
+              取消
+            </Button>
             <Button
               className="modal-btn-right"
               type="primary"
+              onClick={handleOk}
             >
               确定
             </Button>

@@ -59,7 +59,7 @@ export default function Index({}: Props) {
     setItems(dropDwonArr);
   }, []);
   return (
-    <div className="header-container">
+    <div className="room-header-container">
       <div className="header-content">
         <div className="header-icon-box">
           <img
