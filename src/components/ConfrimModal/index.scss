@@ -1,0 +1,56 @@
+.room-custom-modal {
+  height: 194px;
+  border-radius: 8px;
+  .modal-checked {
+    .ant-checkbox-checked .ant-checkbox-inner {
+      background-color: #0039b3; /* 这里是您想要的背景颜色 */
+      border-color: #0039b3; /* 也可以同时改变边框颜色以保持一致性 */
+    }
+  }
+  .ant-modal-content {
+    border-radius: 8px;
+  }
+  .ant-modal-header {
+    border-radius: 8px;
+  }
+  .ant-modal-title {
+    font-weight: 700;
+  }
+  .custom-button {
+    width: 100%;
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    .modal-button-btn-default {
+      width: 88px;
+      height: 32px;
+      border-radius: 4px;
+      background-color: #fff;
+      border: 1px solid #0039b3;
+      color: #0039b3;
+    }
+    .modal-button-btn {
+      width: 88px;
+      height: 32px;
+      border-radius: 4px;
+      margin-left: 20px;
+      background-color: #0039b3;
+    }
+    .modal-button-btn-over-default {
+      width: 88px;
+      height: 32px;
+      border-radius: 4px;
+      background-color: #fff;
+      border: 1px solid #ff4b51;
+      color: #ff4b51;
+    }
+    .modal-button-btn-over {
+      width: 88px;
+      height: 32px;
+      border-radius: 4px;
+      margin-left: 20px;
+      background-color: #ff4b51;
+      border-color: #ff4b51;
+    }
+  }
+}

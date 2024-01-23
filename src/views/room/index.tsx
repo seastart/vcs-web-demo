@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import RoomHeaderComponent from "../../components/RoomHeaderComponent";
+import ConfirmDialog from "../../components/ConfrimModal"; // 导入上面创建的组件
+
 import topPng from "../../assets/meeting/top-png.png";
 import smallGuanShiPin from "../../assets/meeting/guanshipin-small.png";
 import smallGuanYuYin from "../../assets/meeting/guanyuyin-small.png";
+import smallKaiYuYin from "../../assets/meeting/kaiyuyin-small.png";
 import zhankaiIcon from "../../assets/meeting/zhankai.png";
 import shouqiIcon from "../../assets/meeting/shouqi.png";
 import shipinguan from "../../assets/meetStatus/shipinguan.png";
@@ -19,8 +22,17 @@ import chengyuanIcon from "../../assets/meetStatus/chengyuan.png";
 import shezhiIcon from "../../assets/meetStatus/shezhi.png";
 import shanchengyuan from "../../assets/meetStatus/shanchengyuan.png";
 import { UserOutlined, DownOutlined } from "@ant-design/icons";
-import type { RadioChangeEvent } from "antd";
-import { Avatar, Button, Popover, Radio, Space, Divider } from "antd";
+import type { RadioChangeEvent, MenuProps } from "antd";
+import {
+  Avatar,
+  Button,
+  Popover,
+  Radio,
+  Space,
+  Divider,
+  message,
+  Dropdown,
+} from "antd";
 import "./index.scss";
 type Props = {};
 
@@ -33,6 +45,12 @@ export default function Index({}: Props) {
   const [isSmallYuYin, setIsSmallYuYin] = useState(false);
   const [isSmallSheXiang, setIsSmallSheXiang] = useState(false);
   const [isAdmin, setIsAdmin] = useState(true);
+  const [isDialogVisible, setIsDialogVisible] = useState(false); //弹窗的开关
+  const [modalTitle, setModalTitle] = useState(""); //弹窗的开关
+  const [checkboxLabel, setCheckboxLabel] = useState(""); //弹窗的内容
+  const [hover, setHover] = useState(false); //共享屏幕的鼠标移入
+
+  const [isCheck, setIsCheck] = useState(0); //弹窗类型 0全体静音 1解除全体静音 2结束会议 3离开会议 4云录制
   const closeRight = () => {
     const roomLeftBox = document.querySelector(".room-left-box");
     const video = document.querySelector(".video");
@@ -73,6 +91,57 @@ export default function Index({}: Props) {
     console.log("radio checked", e.target.value);
     setValueTwo(e.target.value);
   };
+  //弹窗内容
+  //全体静音
+  const allMute = () => {
+    setModalTitle("所有以及新加入的成员将被静音");
+    setCheckboxLabel("允许成员自我解除静音");
+    setIsCheck(0);
+    setIsDialogVisible(true);
+  };
+  //全体解除静音
+  const allUnMute = () => {
+    setModalTitle("解除全体静音");
+    setIsCheck(1);
+    setCheckboxLabel("您确定解除全体静音吗");
+    setIsDialogVisible(true);
+  };
+  //结束会议
+  const overMute = () => {
+    setModalTitle("结束会议");
+    setIsCheck(2);
+    setCheckboxLabel("您确定要结束会议吗");
+    setIsDialogVisible(true);
+  };
+  //弹窗关闭 全体静音 全体解除静音 结束会议
+  const handleDialogClose = () => {
+    setIsDialogVisible(false); // 关闭弹窗
+  };
+  //是否允许自我解除静音
+  const handleCheckboxChange = (e: boolean) => {
+    console.log(e, "1");
+  };
+  //弹窗确认 全体静音 全体解除静音 结束会议
+  const handleConfirm = () => {
+    if (isCheck == 0) {
+      console.log("执行确认操作");
+      message.info({
+        content: "已开启全体静音",
+        style: {
+          marginTop: "40vh",
+        },
+      });
+    }
+    // 在这里执行确认后的逻辑
+  };
+  //顶部气泡弹窗
+  const titleContent = (
+    <div>
+      <p>会话ID: 123456789</p>
+      <p>SDK版本: 1.0.32</p>
+      <p>匹配版本: 1.0.32</p>
+    </div>
+  );
   //底部气泡弹窗内容
   const sheXiangContent = (
     <div>
@@ -136,17 +205,51 @@ export default function Index({}: Props) {
       </Radio.Group>
     </div>
   );
+  const items: MenuProps["items"] = [
+    {
+      key: "1",
+      label: (
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontSize: "14px" }}
+          // onClick={openModle}
+        >
+          共享屏幕
+        </a>
+      ),
+    },
+    {
+      key: "2",
+      label: (
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontSize: "14px", textAlign: "center" }}
+        >
+          共享电子白板
+        </a>
+      ),
+    },
+  ];
   return (
     <div className="room-container">
       <RoomHeaderComponent />
       <div className="room-content">
         <div className="room-left-box">
           <div className="left-top">
-            <img
-              src={topPng}
-              alt=""
-              className="top-left-img"
-            />
+            <Popover
+              placement="bottomLeft"
+              content={titleContent}
+              trigger="hover"
+              overlayClassName="top-pvpover"
+            >
+              <img
+                src={topPng}
+                alt=""
+                className="top-left-img"
+              />
+            </Popover>
             <div className="left-top-text">会议ID：6666666666</div>
           </div>
           <div className="video-box">
@@ -188,7 +291,70 @@ export default function Index({}: Props) {
               </div>
             </div>
             {/* <video className="video"></video> */}
-            <div className="video-right"></div>
+            <div className="video-right">
+              <div className="video-right-box">
+                <div className="video-right-time">
+                  <div className="item-avatar">
+                    <Avatar
+                      icon={<UserOutlined />}
+                      size={40}
+                    />
+                  </div>
+                  <div className="item-right-bottom">
+                    <img
+                      src={smallKaiYuYin}
+                      alt=""
+                    />
+                    <span>健健</span>
+                  </div>
+                </div>
+                <div className="video-right-time">
+                  <div className="item-avatar">
+                    <Avatar
+                      icon={<UserOutlined />}
+                      size={40}
+                    />
+                  </div>
+                  <div className="item-right-bottom">
+                    <img
+                      src={smallKaiYuYin}
+                      alt=""
+                    />
+                    <span>健健</span>
+                  </div>
+                </div>
+                <div className="video-right-time">
+                  <div className="item-avatar">
+                    <Avatar
+                      icon={<UserOutlined />}
+                      size={40}
+                    />
+                  </div>
+                  <div className="item-right-bottom">
+                    <img
+                      src={smallKaiYuYin}
+                      alt=""
+                    />
+                    <span>健健</span>
+                  </div>
+                </div>
+                <div className="video-right-time">
+                  <div className="item-avatar">
+                    <Avatar
+                      icon={<UserOutlined />}
+                      size={40}
+                    />
+                  </div>
+                  <div className="item-right-bottom">
+                    <img
+                      src={smallKaiYuYin}
+                      alt=""
+                    />
+                    <span>健健</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="room-left-bottom">
             <div className="left-bottom-left">
@@ -213,7 +379,7 @@ export default function Index({}: Props) {
                   <div>解除静音</div>
                 </div>
               )}
-              <Popover content={sheXiangContent}>
+              <Popover content={yuYinContent}>
                 <DownOutlined
                   size={6}
                   style={{ marginTop: "-20px", marginLeft: "-10px" }}
@@ -259,10 +425,17 @@ export default function Index({}: Props) {
                   <div>停止共享</div>
                 </div>
               )}
-              <DownOutlined
-                size={6}
-                style={{ marginTop: "-20px", marginLeft: "-10px" }}
-              />
+              <Dropdown
+                menu={{ items }}
+                placement="top"
+                arrow
+                overlayClassName="room-dropdown"
+              >
+                <DownOutlined
+                  size={6}
+                  style={{ marginTop: "-20px", marginLeft: "-10px" }}
+                />
+              </Dropdown>
               <div className="img-box-bottom">
                 <img
                   src={chengyuanIcon}
@@ -282,6 +455,7 @@ export default function Index({}: Props) {
             <Button
               className="left-bottom-right"
               type="primary"
+              onClick={overMute}
             >
               结束会议
             </Button>
@@ -330,21 +504,40 @@ export default function Index({}: Props) {
                     alt=""
                   />
                 )}
-                <img
+                {/* <img
                   src={shanchengyuan}
                   alt=""
-                />
+                /> */}
               </div>
             </div>
           </div>
           {isAdmin && !isClose ? (
             <div className="room-right-bottom">
-              <Button className="right-bottom-button">全体静音</Button>
-              <Button className="right-bottom-button">解除全体静音</Button>
+              <Button
+                className="right-bottom-button"
+                onClick={allMute}
+              >
+                全体静音
+              </Button>
+              <Button
+                className="right-bottom-button"
+                onClick={allUnMute}
+              >
+                解除全体静音
+              </Button>
             </div>
           ) : null}
         </div>
       </div>
+      <ConfirmDialog
+        isVisible={isDialogVisible}
+        onClose={handleDialogClose}
+        onConfirm={handleConfirm}
+        checkboxLabel={checkboxLabel}
+        isCheck={isCheck}
+        modalTitle={modalTitle}
+        onCheckboxChange={handleCheckboxChange}
+      />
     </div>
   );
 }
