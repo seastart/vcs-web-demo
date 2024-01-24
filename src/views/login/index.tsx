@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import HeaderComponent from "../../components/HeaderComponent";
 import { useHistory } from "react-router-dom";
 import loginImg from "../../assets/common/login-img.png";
@@ -7,17 +7,57 @@ import userIcon from "../../assets/common/user-rule.png";
 import ruleIcon from "../../assets/common/rule-icon.png";
 import noCheckedIcon from "../../assets/common/no-checked.png";
 import isCheckedIcon from "../../assets/common/is-checked.png";
-import { Form, Input, Button } from "antd";
+import { Form, Input, Button, message } from "antd";
 import "./index.scss";
+import { VCSContext } from "../../VCSContext";
+import { useSelector } from "react-redux";
+
 type Props = {};
 
 export default function Index({}: Props) {
   const history = useHistory();
-
+  const vcs = useSelector((state: any) => state.vcsClient);
+  console.log(vcs, "1111");
   const [isChecked, setIsChekced] = useState<Boolean>(false);
+  const [vcss, setVcss] = useState(vcs);
+  useEffect(() => {
+    setVcss(vcs);
+  }, []);
   //提交
   const onFinish = (values: any) => {
     console.log("Success:", values);
+    if (!isChecked) {
+      message.info("请阅读并同意协议");
+      return;
+    }
+    vcss
+      .login({
+        loginname: values.username,
+        password: values.password,
+        vscode: "8888",
+      })
+      .then((r: any) => {
+        console.log(r);
+        if (r.code === 200) {
+          sessionStorage.setItem("token", r.data.token);
+          sessionStorage.setItem("nickname", r.data.account.nickname);
+          console.log(r);
+          message.success("登录成功");
+          history.push("/");
+        }
+        //这里的r 就是登录后返回的帐号信息
+        //r.cod  200表示成功
+        //r.msg  错误描述
+        //r.data 登录数据
+        //r.data.token    登录token
+        //r.data.account   登录帐号信息
+        //r.data.corp    登录的企业
+        //r.data.corp_role   在企业里的角色
+        //r.org         在企业里的组织
+      })
+      .catch((err: any) => {
+        console.log(err, "1");
+      });
   };
 
   const onFinishFailed = (errorInfo: any) => {
@@ -108,7 +148,7 @@ export default function Index({}: Props) {
                 alt=""
                 className="pass-icon"
               />
-              <Form.Item
+              {/* <Form.Item
                 name="rule"
                 rules={[
                   {
@@ -126,10 +166,10 @@ export default function Index({}: Props) {
                 src={ruleIcon}
                 alt=""
                 className="rule-icon"
-              />
+              /> */}
               <div
                 className="right-forget"
-                onClick={goForget}
+                // onClick={goForget}
               >
                 忘记密码?
               </div>

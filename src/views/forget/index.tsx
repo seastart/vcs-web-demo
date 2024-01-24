@@ -9,15 +9,19 @@ import noCheckedIcon from "../../assets/common/no-checked.png";
 import isCheckedIcon from "../../assets/common/is-checked.png";
 import { Form, Input, Button } from "antd";
 import "./index.scss";
+import { useSelector } from "react-redux";
+
 type Props = {};
 
 export default function Index({}: Props) {
   const history = useHistory();
+  const vcs = useSelector((state: any) => state.vcsClient);
 
   const [isChecked, setIsChekced] = useState<Boolean>(false);
   //提交
   const onFinish = (values: any) => {
     console.log("Success:", values);
+    // vcs.updatePwd({ username: values.username, vcode: "8888", old_password:values. });
   };
 
   const onFinishFailed = (errorInfo: any) => {

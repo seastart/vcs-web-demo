@@ -20,6 +20,14 @@ export default function Index({}: Props) {
   const [isYuYin, setIsyuyin] = useState(false);
   const [isShengYin, setIsShengYin] = useState(false);
   const [isMeetingStatus, setIsMeetingStatus] = useState(0);
+  const [meetId, setMeetId] = useState("");
+  const [meetName, setMeetName] = useState("");
+  useEffect(() => {
+    if (sessionStorage.getItem("token")) {
+    } else {
+      history.replace("/login");
+    }
+  }, []);
   const handleOk = () => {
     setIsModalOpen(false);
     history.push("/room");
@@ -27,6 +35,8 @@ export default function Index({}: Props) {
 
   const handleCancel = () => {
     setIsModalOpen(false);
+    setMeetId("");
+    setMeetName("");
   };
   const oepnModals = () => {
     setIsMeetingStatus(0);
@@ -44,6 +54,14 @@ export default function Index({}: Props) {
   };
   const shexiangStatus = () => {
     setIsSheXiang(!isSheXiang);
+  };
+  const idChange = (e: any) => {
+    console.log(e.target.value);
+    setMeetId(e.target.value);
+  };
+  const nameChange = (e: any) => {
+    console.log(e.target.value);
+    setMeetName(e.target.value);
   };
   return (
     <div className="home-page-container">
@@ -87,12 +105,16 @@ export default function Index({}: Props) {
           <Input
             placeholder="请输入会议ID"
             className="modal-input"
+            onChange={idChange}
+            value={meetId}
           />
           <div className="modal-input-title">您的姓名</div>
           <Input
             placeholder="请输入您的姓名"
             className="modal-input"
             allowClear
+            onChange={nameChange}
+            value={meetName}
           />
           <div className="modal-icon-box">
             <div className="modal-icon-name-box">

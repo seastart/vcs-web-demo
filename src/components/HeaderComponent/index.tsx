@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useState, useEffect, useContext } from "react";
+import { useLocation, useHistory } from "react-router-dom";
 import type { MenuProps } from "antd";
-import { Avatar, Dropdown, Modal } from "antd";
+import { Avatar, Dropdown, Modal, message } from "antd";
 import { UserOutlined, DownOutlined } from "@ant-design/icons";
 import logoIcon from "../../assets/common/logo.png";
 import dayuIcon from "../../assets/common/dayu.png";
 import "./index.scss";
+import { VCSContext } from "../../VCSContext";
+import { useSelector } from "react-redux";
 
 type Props = {};
 interface DropdownItem {
@@ -13,7 +15,10 @@ interface DropdownItem {
   label: JSX.Element;
 }
 export default function Index({}: Props) {
+  const vcs = useSelector((state: any) => state.vcsClient);
+  console.log(vcs, "111");
   const location = useLocation();
+  const history = useHistory();
   const [items, setItems] = useState<MenuProps["items"]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const openModle = () => {
@@ -26,8 +31,36 @@ export default function Index({}: Props) {
   const handleCancel = () => {
     setIsModalOpen(false);
   };
+  const loginOut = () => {
+    console.log(vcs);
+    vcs
+      .logout()
+      .then((res: any) => {
+        console.log(res, "退出登录");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("nickname");
+        message.success("退出登录成功");
+        history.replace("/login");
+      })
+      .catch((err: any) => {
+        console.log(err, "退出登录报错");
+      });
+  };
   useEffect(() => {
+    console.log(111);
     //初始化调用，拿到下拉菜单
+    //avatar
+    console.log(sessionStorage.getItem("token"));
+    if (sessionStorage.getItem("token")) {
+      vcs
+        .loginByToken(sessionStorage.getItem("token"))
+        .then((res: any) => {
+          console.log(res);
+        })
+        .catch((err: any) => {
+          console.log(err);
+        });
+    }
     console.log(location.pathname);
     let dropDwonArr = [
       {
@@ -50,6 +83,7 @@ export default function Index({}: Props) {
             target="_blank"
             rel="noopener noreferrer"
             style={{ fontSize: "14px", textAlign: "center" }}
+            onClick={loginOut}
           >
             退出登录
           </a>
@@ -76,7 +110,11 @@ export default function Index({}: Props) {
             <div className="avatar">
               <Avatar icon={<UserOutlined />} />
             </div>
-            <div className="avatar-name">用户123456</div>
+            <div className="avatar-name">
+              {sessionStorage.getItem("nickname")
+                ? sessionStorage.getItem("nickname")
+                : ""}
+            </div>
 
             <div className="avatar-dropdown">
               <Dropdown

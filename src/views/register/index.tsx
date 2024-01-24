@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import HeaderComponent from "../../components/HeaderComponent";
 import { useHistory } from "react-router-dom";
 import loginImg from "../../assets/common/login-img.png";
@@ -7,17 +7,59 @@ import userIcon from "../../assets/common/user-rule.png";
 import ruleIcon from "../../assets/common/rule-icon.png";
 import noCheckedIcon from "../../assets/common/no-checked.png";
 import isCheckedIcon from "../../assets/common/is-checked.png";
-import { Form, Input, Button } from "antd";
+import { Form, Input, Button, message } from "antd";
 import "./index.scss";
+import { useSelector } from "react-redux";
 type Props = {};
 
 export default function Index({}: Props) {
+  const vcsa = useSelector((state: any) => state.vcsClient);
+
   const history = useHistory();
 
   const [isChecked, setIsChekced] = useState<Boolean>(false);
   //提交
   const onFinish = (values: any) => {
     console.log("Success:", values);
+    // vcsa
+    //   .register({
+    //     name: values.username,
+    //     password: values.password,
+    //     vcode: "8888",
+    //   })
+    //   .then((r) => { });
+    if (!isChecked) {
+      message.info("请阅读并同意协议");
+      return;
+    }
+    (vcsa as any)
+      .register({
+        name: values.username,
+        password: values.password,
+        vcode: "8888",
+      })
+      .then((r: any) => {
+        console.log(r, "res");
+        if (r.code == 200) {
+          message.success("注册并登录成功");
+          sessionStorage.setItem("token", r.data.token);
+          sessionStorage.setItem("nickname", r.data.account.nickname);
+
+          history.push("/");
+        }
+        //这里的r 就是登录后返回的帐号信息
+        //r.cod  200表示成功
+        //r.msg  错误描述
+        //r.data 登录数据
+        //r.data.token    登录token
+        //r.data.account   登录帐号信息
+        //r.data.corp    登录的企业
+        //r.data.corp_role   在企业里的角色
+        //r.org         在企业里的组织
+      })
+      .catch((res: any) => {
+        console.log(res);
+      });
   };
 
   const onFinishFailed = (errorInfo: any) => {
