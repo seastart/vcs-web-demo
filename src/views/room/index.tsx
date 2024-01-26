@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import RoomHeaderComponent from "../../components/RoomHeaderComponent";
 import ConfirmDialog from "../../components/ConfrimModal"; // 导入上面创建的组件
 import { useHistory, useLocation } from "react-router-dom";
@@ -44,6 +44,10 @@ export default function Index({}: Props) {
   //全局
   const history = useHistory();
   const vcs = useSelector((state: any) => state.vcs.vcsClient); //传入的vcs
+  const isYuyin = useSelector((state: any) => state.yuyin.yuyin); //传入的麦克风状态
+  const isSheXiangStatus = useSelector((state: any) => state.shexiang.shexiang); //传入的摄像头状态
+  console.log(isYuyin, "麦克风是否开启");
+  console.log(isSheXiangStatus, "摄像头是否开启");
   // const room = useSelector((state: any) => state.room.room); //传入的房间信息，在homePage页面进入会议时传入
   //state
   const location = useLocation();
@@ -66,13 +70,49 @@ export default function Index({}: Props) {
 
   const [isCheck, setIsCheck] = useState(0); //弹窗类型 0全体静音 1解除全体静音 2结束会议 3离开会议 4云录制
   const [data, setData] = useState<any>([]); //维护成员列表以及各种信息
-  const [val, setVal] = useState<any>([]); //维护成员触发
-  const [overId, setOverId] = useState<any>([]); //维护成员触发
+  // const [val, setVal] = useState<any>([]); //维护成员触发
+  // const [overId, setOverId] = useState<any>([]); //维护成员触发
+  //成员小窗口的部分逻辑
+  const [displayIndex, setDisplayIndex] = useState(0); // 从第0位开始显示，因为第一位始终显示
+  const [displayedMembers, setDisplayedMembers] = useState<any>([]); // 从第0位开始显示，因为第一位始终显示
+  const MAX_DISPLAY = 4; // 最多展示的成员数
+  const MAX_DISPLAY_EXCEPT_FIRST = 3; // 定义最大显示数量，减去始终显示的第一个成员
+  const [selectedId, setSelectedId] = useState<any>(null); //选中小窗口的唯一标识
+  const [selectedData, setSelectedData] = useState<any>([]); //选中小窗口的数组，大窗口的展示
+  const [audioinput, setAudioinput] = useState<any>([]); //枚举音频
+  const [videoinput, setVideoinput] = useState<any>([]); //枚举视频
+  //视频播放
+  const [isVideoVisible, setIsVideoVisible] = useState<any>(true); // 控制Video视频盒子是否可见
+  const [ss, setss] = useState<any>({}); // 存储摄像头s对象
+
   useEffect(() => {
     // console.log(room, "room!!");
     // vcs.loginByToken({});
-    //进来清除缓存
+    //初始化自己的麦克风摄像头状态
+    setIsYuYin(isYuyin);
+    setIsSheXiang(isSheXiangStatus);
 
+    //初始化加载一遍麦克风设备
+    vcs.enumDevices().then((res: any) => {
+      console.log(res, "枚举设备");
+      let audioOutputDevices = res.filter(
+        (res: any) => res.kind === "audiooutput"
+      );
+      audioOutputDevices;
+
+      setAudioinput(audioOutputDevices);
+      console.log(audioOutputDevices);
+    });
+    //初始化加载一遍摄像头设备
+    vcs.enumDevices().then((res: any) => {
+      console.log(res, "枚举设备");
+      let audioOutputDevices = res.filter(
+        (res: any) => res.kind === "videoinput"
+      );
+      setValueTwo(audioOutputDevices[0].id);
+      setVideoinput(audioOutputDevices);
+      console.log(audioOutputDevices);
+    });
     console.log(nickname);
     if (sessionStorage.getItem("token")) {
       vcs
@@ -98,33 +138,23 @@ export default function Index({}: Props) {
         });
     }
   }, []);
-  //成员进入的列表维护
+  //新增成员维护列表
+  // 初始化时设置当前用户
   useEffect(() => {
-    let ids: any = JSON.parse(sessionStorage.getItem("options")!);
-    let mine: { nickname: any; avatar?: string | null; id?: string | null } = {
+    let ids = JSON.parse(sessionStorage.getItem("options") || "{}");
+    let mine = {
       nickname: nickname,
       avatar: sessionStorage.getItem("avatar") || null,
+      id: ids.account?.id || null,
     };
-    if (sessionStorage.getItem("avatar")) {
-      mine.avatar = sessionStorage.getItem("avatar");
-    }
-    if (ids) {
-      mine.id = ids.account.id;
-    }
-    let updatedMembers = [mine, ...val].filter((item) => item.id !== overId);
 
-    // dataArr.push(val);
-    // console.log(dataArr);
-    //成员离开的删除
-    // let newDataArr = dataArr.filter((item: any) => item.id !== overId);
-    // console.log(newDataArr, "newDataArr");
-    //去除空对象
-    updatedMembers = updatedMembers.filter((item) => !isEmptyObject(item));
-    console.log(updatedMembers, "新数组");
-    //右侧小窗口的逻辑
-    //思路：从数组中取出4个,如果不足4个则取出3 2 1
-    setData(updatedMembers);
-  }, [val, overId]);
+    // 将当前用户添加到成员列表
+    setData([mine]);
+    setSelectedId(mine.id); // 设置选中成员的 ID
+    setSelectedData(mine);
+  }, [nickname]); // 依赖项是nickname
+  // 当 displayIndex 改变时，更新 displayedMembers 状态
+
   const resumeRoom = (option: any) => {
     vcs
       .resumeRoom(option)
@@ -147,7 +177,18 @@ export default function Index({}: Props) {
         console.log(room, "room");
         // store.dispatch(setRoom(room));
         //修改昵称
-        room.updateAccount({ nickname });
+        room.updateAccount({ nickname }, true);
+        if (isSheXiangStatus) {
+          room.openVideo({}).then((s: any) => {
+            //开始推流
+            setss(s);
+            rooms.updateAccount({ video_state: 1 }, true);
+            s.connect().then(() => {
+              setIsVideoVisible(false);
+              s.play("videoDom"); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
+            });
+          });
+        }
         setRooms(room);
         onAfterEnterRoom(room);
         sessionStorage.setItem("options", JSON.stringify(room.options));
@@ -173,12 +214,20 @@ export default function Index({}: Props) {
   //监听事件
   // 成员进入
   const onMemberIn = (vcsMember: any) => {
-    console.log(vcsMember, "成员进入");
-    let obj = {
+    let newMember = {
       nickname: vcsMember.options.account.nickname,
       id: vcsMember.options.account.id,
+      avatar: vcsMember.options.account.avatar
+        ? vcsMember.options.account.avatar
+        : null,
     };
-    setVal((prevMembers: any) => [...prevMembers, obj]);
+
+    // 更新成员列表，添加新成员
+    setData((prevMembers: any) => {
+      // 首先确保prevMembers是一个数组
+      const array = Array.isArray(prevMembers) ? prevMembers : [];
+      return array.concat(newMember);
+    });
   };
   const onMemberUpdate = (vcsMember: any) => {};
   const onMemberOut = (vcsMember: any) => {
@@ -188,16 +237,65 @@ export default function Index({}: Props) {
     //   (item: any) => item.id !== vcsMember.options.account.id
     // );
     // console.log(newDataArr, "newDataArr");
-    const memberId = vcsMember.options.account.id;
-    setOverId((prevMembers: any) =>
-      prevMembers.filter((member: any) => member.id !== memberId)
-    );
+    // const memberId = vcsMember.options.account.id;
+    // setOverId((prevMembers: any) =>
+    //   prevMembers.filter((member: any) => member.id !== memberId)
+    // );
 
     // setOverId(vcsMember.options.account.id);
+    let memberId = vcsMember.options.account.id;
+
+    // 更新成员列表，移除离开的成员
+    setData((prevMembers: any) => {
+      // 首先确保prevMembers是一个数组
+      const array = Array.isArray(prevMembers) ? prevMembers : [];
+      return array.filter((member) => member.id !== memberId);
+    });
   };
   const onShare = (vcsMember: any) => {};
   const onRoomClosed = (r: any) => {};
   const onRoomEnd = (r: any) => {};
+  //这里是小窗口的展示及页码切换逻辑
+  // 这个函数根据 startIndex 获取要展示的成员列表
+  // 获取当前应该显示的成员
+  const getDisplayedMembers = useCallback(() => {
+    // 第一个成员始终显示
+    const firstMember = data[0];
+
+    // 根据 displayIndex 获取除第一个成员外的其他成员
+    const otherMembers = data.slice(
+      displayIndex + 1, // 从 displayIndex + 1 开始
+      displayIndex + MAX_DISPLAY_EXCEPT_FIRST + 1 // 选取最多 MAX_DISPLAY_EXCEPT_FIRST 个成员
+    );
+
+    // 组合成员列表
+    return [firstMember, ...otherMembers];
+  }, [data, displayIndex]);
+
+  useEffect(() => {
+    setDisplayedMembers(getDisplayedMembers());
+  }, [displayIndex, getDisplayedMembers]);
+  // 点击下箭头的处理函数
+  const handleNext = () => {
+    // 确保不会超出数据范围，并且留下至少一个成员来显示
+    if (displayIndex + MAX_DISPLAY_EXCEPT_FIRST < data.length - 1) {
+      setDisplayIndex(displayIndex + MAX_DISPLAY_EXCEPT_FIRST);
+    }
+  };
+
+  const handlePrev = () => {
+    // 确保索引不会小于0
+    if (displayIndex > 0) {
+      setDisplayIndex(Math.max(displayIndex - MAX_DISPLAY_EXCEPT_FIRST, 0));
+    }
+  };
+  //点击小窗口
+  const rightBoxClick = (item: any) => {
+    console.log(item, "点我！");
+    setSelectedId(item.id); // 更新选中的盒子 id
+    setSelectedData(item);
+  };
+  //当前展示的成员
   const closeRight = () => {
     const roomLeftBox = document.querySelector(".room-left-box");
     const video = document.querySelector(".video");
@@ -227,16 +325,53 @@ export default function Index({}: Props) {
     setIsZhanKai(!iszhankai);
   };
   //底部弹窗值和事件
-  const [value, setValue] = useState(1);
-  const [valueTwo, setValueTwo] = useState(1);
+  const [value, setValue] = useState("default");
+  const [valueTwo, setValueTwo] = useState("");
 
   const sheXiangChange = (e: RadioChangeEvent) => {
+    ss.close();
+    rooms.updateAccount({ video_state: 1 }, true);
+
+    rooms.openVideo({ deviceId: e.target.value }).then((s: any) => {
+      //开始推流
+      setss(s);
+      rooms.updateAccount({ video_state: 0 }, true);
+      s.connect().then(() => {
+        setIsVideoVisible(false);
+
+        s.play("videoDom"); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
+      });
+    });
+    console.log("radio checked", e.target.value);
+
+    setValueTwo(e.target.value);
+  };
+  const yuyinChange = (e: RadioChangeEvent) => {
     console.log("radio checked", e.target.value);
     setValue(e.target.value);
   };
-  const sheXiangChangeTwo = (e: RadioChangeEvent) => {
-    console.log("radio checked", e.target.value);
-    setValueTwo(e.target.value);
+  //点击麦克风的状态
+  const yuyinStatus = () => {
+    setIsYuYin(!isYuYin);
+  };
+  //点击摄像头的状态
+  const shipinStatus = () => {
+    if (isSheXiang) {
+      ss.close();
+      rooms.updateAccount({ video_state: 1 }, true);
+      setIsVideoVisible(true);
+    } else {
+      rooms.openVideo({ deviceId: valueTwo }).then((s: any) => {
+        //开始推流
+        setss(s);
+        rooms.updateAccount({ video_state: 0 }, true);
+        s.connect().then(() => {
+          setIsVideoVisible(false);
+          s.play("videoDom"); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
+        });
+      });
+    }
+    setIsSheXiang(!isSheXiang);
   };
   //弹窗内容
   //全体静音
@@ -326,26 +461,14 @@ export default function Index({}: Props) {
       </div>
       <Radio.Group
         onChange={sheXiangChange}
-        value={value}
-      >
-        <Space direction="vertical">
-          <Radio value={1}>摄像头 A</Radio>
-          <Radio value={2}>摄像头 B</Radio>
-          <Radio value={3}>摄像头 C</Radio>
-        </Space>
-      </Radio.Group>
-      <Divider />
-      <div style={{ color: "#999", fontSize: "14px", paddingBottom: "4px" }}>
-        选择监控流（RTSP）
-      </div>
-      <Radio.Group
-        onChange={sheXiangChangeTwo}
         value={valueTwo}
       >
         <Space direction="vertical">
-          <Radio value={1}>监控流 A</Radio>
-          <Radio value={2}>监控流 B</Radio>
-          <Radio value={3}>监控流 C</Radio>
+          {videoinput &&
+            videoinput.length &&
+            videoinput.map((item: any, index: number) => {
+              return <Radio value={item.id}>{item.name}</Radio>;
+            })}
         </Space>
       </Radio.Group>
     </div>
@@ -353,30 +476,18 @@ export default function Index({}: Props) {
   const yuYinContent = (
     <div>
       <div style={{ color: "#999", fontSize: "14px", paddingBottom: "4px" }}>
-        选择摄像头
+        选择麦克风
       </div>
       <Radio.Group
-        onChange={sheXiangChange}
+        onChange={yuyinChange}
         value={value}
       >
         <Space direction="vertical">
-          <Radio value={1}>摄像头 A</Radio>
-          <Radio value={2}>摄像头 B</Radio>
-          <Radio value={3}>摄像头 C</Radio>
-        </Space>
-      </Radio.Group>
-      <Divider />
-      <div style={{ color: "#999", fontSize: "14px", paddingBottom: "4px" }}>
-        选择监控流（RTSP）
-      </div>
-      <Radio.Group
-        onChange={sheXiangChangeTwo}
-        value={valueTwo}
-      >
-        <Space direction="vertical">
-          <Radio value={1}>监控流 A</Radio>
-          <Radio value={2}>监控流 B</Radio>
-          <Radio value={3}>监控流 C</Radio>
+          {audioinput &&
+            audioinput.length &&
+            audioinput.map((item: any, index: number) => {
+              return <Radio value={item.id}>{item.name}</Radio>;
+            })}
         </Space>
       </Radio.Group>
     </div>
@@ -408,6 +519,28 @@ export default function Index({}: Props) {
       ),
     },
   ];
+  const handleOpenChange = async (newOpen: boolean) => {
+    if (newOpen) {
+      let res = await vcs.enumDevices();
+      console.log(res, "枚举设备");
+      let audioOutputDevices = res.filter(
+        (res: any) => res.kind === "audiooutput"
+      );
+      setAudioinput(audioOutputDevices);
+      console.log(audioOutputDevices);
+    }
+  };
+  const handleOpenChanges = async (newOpen: boolean) => {
+    if (newOpen) {
+      let res = await vcs.enumDevices();
+      console.log(res, "枚举设备");
+      let audioOutputDevices = res.filter(
+        (res: any) => res.kind === "videoinput"
+      );
+      setVideoinput(audioOutputDevices);
+      console.log(audioOutputDevices);
+    }
+  };
   return (
     <div className="room-container">
       <RoomHeaderComponent />
@@ -429,8 +562,14 @@ export default function Index({}: Props) {
             <div className="left-top-text">会议ID：{id}</div>
           </div>
           <div className="video-box">
-            <div className="video">
-              <div className="video-box-flex">
+            <div
+              className="video"
+              id="videoDom"
+            >
+              <div
+                className="video-box-flex"
+                style={{ display: isVideoVisible ? "block" : "none" }}
+              >
                 <div className="video-avatar">
                   <Avatar
                     icon={<UserOutlined />}
@@ -446,12 +585,13 @@ export default function Index({}: Props) {
                     src={smallGuanYuYin}
                     alt=""
                   />
-                  <span>{nickname}</span>
+                  <span>{selectedData.nickname}</span>
                 </div>
               </div>
-              <div
+              {/* <div
                 className="video-shou"
                 onClick={zhankaiStatus}
+                style={{ display: isVideoVisible ? "block" : "none" }}
               >
                 {!iszhankai ? (
                   <img
@@ -464,84 +604,82 @@ export default function Index({}: Props) {
                     alt=""
                   />
                 )}
-              </div>
+              </div> */}
             </div>
+            {iszhankai ? (
+              <div
+                className="video-shou"
+                onClick={zhankaiStatus}
+              >
+                <img
+                  src={shouqiIcon}
+                  alt=""
+                />
+              </div>
+            ) : (
+              ""
+            )}
             {/* <video className="video"></video> */}
             <div className="video-right">
+              {!iszhankai ? (
+                <div
+                  className="video-shou"
+                  onClick={zhankaiStatus}
+                >
+                  <img
+                    src={zhankaiIcon}
+                    alt=""
+                  />
+                </div>
+              ) : (
+                ""
+              )}
+
               <div>
                 <img
                   src={topIcon}
                   alt=""
                   style={{ cursor: "pointer" }}
+                  onClick={handlePrev}
                 />
               </div>
               <div className="video-right-box">
-                <div className="video-right-time">
-                  <div className="item-avatar">
-                    <Avatar
-                      icon={<UserOutlined />}
-                      size={40}
-                    />
-                  </div>
-                  <div className="item-right-bottom">
-                    <img
-                      src={smallKaiYuYin}
-                      alt=""
-                    />
-                    <span>健健</span>
-                  </div>
-                </div>
-                <div className="video-right-time">
-                  <div className="item-avatar">
-                    <Avatar
-                      icon={<UserOutlined />}
-                      size={40}
-                    />
-                  </div>
-                  <div className="item-right-bottom">
-                    <img
-                      src={smallKaiYuYin}
-                      alt=""
-                    />
-                    <span>健健</span>
-                  </div>
-                </div>
-                <div className="video-right-time">
-                  <div className="item-avatar">
-                    <Avatar
-                      icon={<UserOutlined />}
-                      size={40}
-                    />
-                  </div>
-                  <div className="item-right-bottom">
-                    <img
-                      src={smallKaiYuYin}
-                      alt=""
-                    />
-                    <span>健健</span>
-                  </div>
-                </div>
-                <div className="video-right-time">
-                  <div className="item-avatar">
-                    <Avatar
-                      icon={<UserOutlined />}
-                      size={40}
-                    />
-                  </div>
-                  <div className="item-right-bottom">
-                    <img
-                      src={smallKaiYuYin}
-                      alt=""
-                    />
-                    <span>健健</span>
-                  </div>
-                </div>
+                {displayedMembers &&
+                  displayedMembers.length &&
+                  displayedMembers.map(
+                    (data: any) =>
+                      data && (
+                        <div
+                          // className="video-right-time"
+                          className={`video-right-time ${
+                            selectedId === data.id ? "highlight" : ""
+                          }`}
+                          key={data.id}
+                          onClick={() => rightBoxClick(data)}
+                        >
+                          <div className="item-avatar">
+                            <Avatar
+                              icon={<UserOutlined />}
+                              size={40}
+                            />
+                          </div>
+                          <div className="item-right-bottom">
+                            <img
+                              src={smallKaiYuYin}
+                              alt=""
+                            />
+                            <span>{data.nickname}</span>
+                          </div>
+                        </div>
+                      )
+                  )}
               </div>
               <div>
                 <img
                   src={bottomIcon}
                   alt=""
                   style={{ cursor: "pointer" }}
+                  onClick={handleNext}
                 />
               </div>
             </div>
@@ -557,19 +695,26 @@ export default function Index({}: Props) {
                   <img
                     src={yuyinkai}
                     alt=""
+                    onClick={yuyinStatus}
+                    style={{ marginRight: "3px" }}
                   />
-                  <div>静音</div>
+                  <div>开启静音</div>
                 </div>
               ) : (
                 <div className="img-box-bottom">
                   <img
                     src={yuyinguan}
                     alt=""
+                    onClick={yuyinStatus}
                   />
                   <div>解除静音</div>
                 </div>
               )}
-              <Popover content={yuYinContent}>
+              <Popover
+                content={yuYinContent}
+                trigger="click"
+                onOpenChange={handleOpenChange}
+              >
                 <DownOutlined
                   size={6}
                   style={{ marginTop: "-20px", marginLeft: "-10px" }}
@@ -580,6 +725,7 @@ export default function Index({}: Props) {
                   <img
                     src={shipinkai}
                     alt=""
+                    onClick={shipinStatus}
                   />
                   <div>关闭视频</div>
                 </div>
@@ -588,11 +734,16 @@ export default function Index({}: Props) {
                   <img
                     src={shipinguan}
                     alt=""
+                    onClick={shipinStatus}
                   />
                   <div>开启视频</div>
                 </div>
               )}
-              <Popover content={sheXiangContent}>
+              <Popover
+                content={sheXiangContent}
+                trigger="click"
+                onOpenChange={handleOpenChanges}
+              >
                 <DownOutlined
                   size={6}
                   style={{ marginTop: "-20px", marginLeft: "-10px" }}

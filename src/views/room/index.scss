@@ -31,12 +31,23 @@
         width: 100%;
         height: 87%;
         display: flex;
+        position: relative;
+        .video-shou {
+          width: 20px;
+          height: 46px;
+          cursor: pointer;
+          position: absolute;
+          right: 0;
+          top: 50%;
+          z-index: 100;
+        }
         .video {
           min-width: 80%;
           display: flex;
           justify-content: space-between;
           align-items: center;
           background-color: #1a1c22;
+
           .video-box-flex {
             display: flex;
             flex-direction: column;
@@ -51,23 +62,31 @@
               font-size: 14px;
             }
           }
-          .video-shou {
-            width: 20px;
-            height: 46px;
-            cursor: pointer;
-          }
         }
         .video-right {
-          width: 20%;
+          min-width: 20%;
           background-color: #363b41;
           display: flex; /* 启用Flexbox布局 */
           flex-direction: column; /* 子元素垂直排列 */
           justify-content: center; /* 子元素在主轴（垂直方向）居中 */
           padding: 60px 0; /* 上下各51px的内边距 */
+          position: relative;
+          .video-shou {
+            width: 20px;
+            height: 46px;
+            cursor: pointer;
+            position: absolute;
+            left: -20px;
+            top: 50%;
+            z-index: 100;
+          }
           .video-right-box {
             height: 100%;
             display: flex; // 启用Flexbox布局
             flex-direction: column; // 子元素垂直排列
+            .highlight {
+              border: 2px solid green; /* 选中盒子的边框颜色 */
+            }
             .video-right-time {
               margin: 12px 12px 0;
               height: 141px;
@@ -81,7 +100,6 @@
               .item-avatar {
               }
               .item-right-bottom {
-                width: 72px;
                 height: 24px;
                 background: rgba(0, 0, 0, 0.6);
                 font-size: 13px;
@@ -99,6 +117,7 @@
                 }
                 span {
                   font-size: 13px;
+                  margin-right: 10px;
                 }
               }
             }

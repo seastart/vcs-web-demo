@@ -13,6 +13,8 @@ import yuyinkai from "../../assets/meeting/yuyinkai.png";
 import { Button, Input, Modal, message } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import { setRoom } from "../../actions/roomActions";
+import { setYuYin } from "../../actions/yuyinActions";
+import { setSheXiang } from "../../actions/shexiangActions";
 import { store } from "../../store/store";
 
 type Props = {};
@@ -43,6 +45,9 @@ export default function Index({}: Props) {
   const handleOk = () => {
     // setIsModalOpen(false);
     sessionStorage.removeItem("options");
+    store.dispatch(setYuYin(isYuYin));
+    store.dispatch(setSheXiang(isSheXiang));
+
     if (meetId == "") {
       message.info("请输入会议ID");
       return;
