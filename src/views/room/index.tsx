@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import RoomHeaderComponent from "../../components/RoomHeaderComponent";
 import ConfirmDialog from "../../components/ConfrimModal"; // 导入上面创建的组件
+import { useHistory, useLocation } from "react-router-dom";
 
 import topPng from "../../assets/meeting/top-png.png";
 import smallGuanShiPin from "../../assets/meeting/guanshipin-small.png";
@@ -8,6 +9,8 @@ import smallGuanYuYin from "../../assets/meeting/guanyuyin-small.png";
 import smallKaiYuYin from "../../assets/meeting/kaiyuyin-small.png";
 import zhankaiIcon from "../../assets/meeting/zhankai.png";
 import shouqiIcon from "../../assets/meeting/shouqi.png";
+import topIcon from "../../assets/meeting/top.png";
+import bottomIcon from "../../assets/meeting/bottom.png";
 import shipinguan from "../../assets/meetStatus/shipinguan.png";
 import yuyinguan from "../../assets/meetStatus/yuyinguan.png";
 import shipinkai from "../../assets/meetStatus/shipinkai.png";
@@ -22,6 +25,7 @@ import chengyuanIcon from "../../assets/meetStatus/chengyuan.png";
 import shezhiIcon from "../../assets/meetStatus/shezhi.png";
 import shanchengyuan from "../../assets/meetStatus/shanchengyuan.png";
 import { UserOutlined, DownOutlined } from "@ant-design/icons";
+import { useSelector } from "react-redux";
 import type { RadioChangeEvent, MenuProps } from "antd";
 import {
   Avatar,
@@ -37,7 +41,17 @@ import "./index.scss";
 type Props = {};
 
 export default function Index({}: Props) {
+  //全局
+  const history = useHistory();
+  const vcs = useSelector((state: any) => state.vcs.vcsClient); //传入的vcs
+  // const room = useSelector((state: any) => state.room.room); //传入的房间信息，在homePage页面进入会议时传入
+  //state
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const id = queryParams.get("id");
+  const nickname = queryParams.get("name");
   const [isClose, setIsClose] = useState(false);
+  const [rooms, setRooms] = useState<any>(null);
   const [iszhankai, setIsZhanKai] = useState(false);
   const [isYuYin, setIsYuYin] = useState(false);
   const [isSheXiang, setIsSheXiang] = useState(false);
@@ -51,6 +65,139 @@ export default function Index({}: Props) {
   const [hover, setHover] = useState(false); //共享屏幕的鼠标移入
 
   const [isCheck, setIsCheck] = useState(0); //弹窗类型 0全体静音 1解除全体静音 2结束会议 3离开会议 4云录制
+  const [data, setData] = useState<any>([]); //维护成员列表以及各种信息
+  const [val, setVal] = useState<any>([]); //维护成员触发
+  const [overId, setOverId] = useState<any>([]); //维护成员触发
+  useEffect(() => {
+    // console.log(room, "room!!");
+    // vcs.loginByToken({});
+    //进来清除缓存
+
+    console.log(nickname);
+    if (sessionStorage.getItem("token")) {
+      vcs
+        .loginByToken(sessionStorage.getItem("token"))
+        .then((res: any) => {
+          console.log(res);
+          let option = sessionStorage.getItem("options");
+          if (option) {
+            resumeRoom(JSON.parse(option));
+          } else {
+            onEnterRoom();
+          }
+        })
+        .catch((err: any) => {
+          console.log(err);
+          let option = sessionStorage.getItem("options");
+          console.log(option, "11111111122222222222222");
+          if (option) {
+            resumeRoom(JSON.parse(option));
+          } else {
+            onEnterRoom();
+          }
+        });
+    }
+  }, []);
+  //成员进入的列表维护
+  useEffect(() => {
+    let ids: any = JSON.parse(sessionStorage.getItem("options")!);
+    let mine: { nickname: any; avatar?: string | null; id?: string | null } = {
+      nickname: nickname,
+      avatar: sessionStorage.getItem("avatar") || null,
+    };
+    if (sessionStorage.getItem("avatar")) {
+      mine.avatar = sessionStorage.getItem("avatar");
+    }
+    if (ids) {
+      mine.id = ids.account.id;
+    }
+    let updatedMembers = [mine, ...val].filter((item) => item.id !== overId);
+
+    // dataArr.push(val);
+    // console.log(dataArr);
+    //成员离开的删除
+    // let newDataArr = dataArr.filter((item: any) => item.id !== overId);
+    // console.log(newDataArr, "newDataArr");
+    //去除空对象
+    updatedMembers = updatedMembers.filter((item) => !isEmptyObject(item));
+    console.log(updatedMembers, "新数组");
+    //右侧小窗口的逻辑
+    //思路：从数组中取出4个,如果不足4个则取出3 2 1
+    setData(updatedMembers);
+  }, [val, overId]);
+  const resumeRoom = (option: any) => {
+    vcs
+      .resumeRoom(option)
+      .then((room: any) => {
+        console.log(room, "room");
+        // store.dispatch(setRoom(room));
+        //修改昵称
+        setRooms(room);
+        onAfterEnterRoom(room);
+      })
+      .catch((err: any) => {
+        console.log(err, "err");
+        message.error(err.message);
+      });
+  };
+  const onEnterRoom = () => {
+    vcs
+      .enterRoom({ room_no: id })
+      .then((room: any) => {
+        console.log(room, "room");
+        // store.dispatch(setRoom(room));
+        //修改昵称
+        room.updateAccount({ nickname });
+        setRooms(room);
+        onAfterEnterRoom(room);
+        sessionStorage.setItem("options", JSON.stringify(room.options));
+      })
+      .catch((err: any) => {
+        console.log(err, "err");
+        message.error(err.message);
+      });
+  };
+  //去除空对象
+  const isEmptyObject = (obj: any) => {
+    return Object.keys(obj).length === 0 && obj.constructor === Object;
+  };
+  const onAfterEnterRoom = (room: any) => {
+    console.log(room, "11111");
+    room.on("account-in", onMemberIn);
+    room.on("account-update", onMemberUpdate);
+    room.on("account-out", onMemberOut);
+    room.on("share", onShare);
+    room.on("closed", onRoomClosed);
+    room.on("room-end", onRoomEnd);
+  };
+  //监听事件
+  // 成员进入
+  const onMemberIn = (vcsMember: any) => {
+    console.log(vcsMember, "成员进入");
+    let obj = {
+      nickname: vcsMember.options.account.nickname,
+      id: vcsMember.options.account.id,
+    };
+    setVal((prevMembers: any) => [...prevMembers, obj]);
+  };
+  const onMemberUpdate = (vcsMember: any) => {};
+  const onMemberOut = (vcsMember: any) => {
+    console.log(vcsMember, "成员离开");
+    // console.log(data, "data");
+    // let newDataArr = data.filter(
+    //   (item: any) => item.id !== vcsMember.options.account.id
+    // );
+    // console.log(newDataArr, "newDataArr");
+    const memberId = vcsMember.options.account.id;
+    setOverId((prevMembers: any) =>
+      prevMembers.filter((member: any) => member.id !== memberId)
+    );
+
+    // setOverId(vcsMember.options.account.id);
+  };
+  const onShare = (vcsMember: any) => {};
+  const onRoomClosed = (r: any) => {};
+  const onRoomEnd = (r: any) => {};
   const closeRight = () => {
     const roomLeftBox = document.querySelector(".room-left-box");
     const video = document.querySelector(".video");
@@ -113,6 +260,12 @@ export default function Index({}: Props) {
     setCheckboxLabel("您确定要结束会议吗");
     setIsDialogVisible(true);
   };
+  const overMutes = () => {
+    setModalTitle("退出会议");
+    setIsCheck(3);
+    setCheckboxLabel("您确定要退出会议吗");
+    setIsDialogVisible(true);
+  };
   //弹窗关闭 全体静音 全体解除静音 结束会议
   const handleDialogClose = () => {
     setIsDialogVisible(false); // 关闭弹窗
@@ -131,13 +284,36 @@ export default function Index({}: Props) {
           marginTop: "40vh",
         },
       });
+    } else if (isCheck == 2) {
+      if (rooms && rooms.getOptions().conf) {
+        vcs
+          .stopConference({ conf_id: rooms.getOptions().conf.id })
+          .then((res: any) => {
+            message.success("结束会议成功");
+            history.push("/");
+            rooms.close().finally(() => {
+              setRooms(null);
+            });
+          })
+          .catch((err: any) => {
+            console.log(err);
+          });
+      }
+
+      // room.client.room.no 会议号
+    } else if (isCheck == 3) {
+      rooms.close().finally(() => {
+        setRooms(null);
+        message.success("退出会议成功！");
+        history.push("/");
+      });
     }
     // 在这里执行确认后的逻辑
   };
   //顶部气泡弹窗
   const titleContent = (
     <div>
-      <p>会话ID: 123456789</p>
+      <p>会话ID: {id}</p>
       <p>SDK版本: 1.0.32</p>
       <p>匹配版本: 1.0.32</p>
     </div>
@@ -250,7 +426,7 @@ export default function Index({}: Props) {
                 className="top-left-img"
               />
             </Popover>
-            <div className="left-top-text">会议ID：6666666666</div>
+            <div className="left-top-text">会议ID：{id}</div>
           </div>
           <div className="video-box">
             <div className="video">
@@ -270,7 +446,7 @@ export default function Index({}: Props) {
                     src={smallGuanYuYin}
                     alt=""
                   />
-                  <span>赵大刀</span>
+                  <span>{nickname}</span>
                 </div>
               </div>
               <div
@@ -292,6 +468,13 @@ export default function Index({}: Props) {
             </div>
             {/* <video className="video"></video> */}
             <div className="video-right">
+              <div>
+                <img
+                  src={topIcon}
+                  alt=""
+                  style={{ cursor: "pointer" }}
+                />
+              </div>
               <div className="video-right-box">
                 <div className="video-right-time">
                   <div className="item-avatar">
@@ -353,6 +536,13 @@ export default function Index({}: Props) {
                     <span>健健</span>
                   </div>
                 </div>
+              </div>
+              <div>
+                <img
+                  src={bottomIcon}
+                  alt=""
+                  style={{ cursor: "pointer" }}
+                />
               </div>
             </div>
           </div>
@@ -441,7 +631,7 @@ export default function Index({}: Props) {
                   src={chengyuanIcon}
                   alt=""
                 />
-                <div>成员(3人)</div>
+                <div>成员({data.length}人)</div>
               </div>
               <div className="img-box-bottom">
                 <img
@@ -459,6 +649,13 @@ export default function Index({}: Props) {
             >
               结束会议
             </Button>
+            <Button
+              className="left-bottom-right"
+              type="primary"
+              onClick={overMutes}
+            >
+              退出会议
+            </Button>
           </div>
         </div>
         <div className="room-right-box">
@@ -472,44 +669,50 @@ export default function Index({}: Props) {
             </div>
           </div>
           <div className="room-right-content">
-            <div className="right-name-box">
-              <Avatar
-                icon={<UserOutlined />}
-                size={40}
-              />
-              <div className="right-name">
-                <div className="name-top">健健</div>
-                {/* <div className="name-bottom">12</div> */}
-              </div>
-              <div className="right-icon">
-                {isSmallYuYin ? (
-                  <img
-                    src={smallyuyinkaiIcon}
-                    alt=""
-                  />
-                ) : (
-                  <img
-                    src={smallyuyinguanIcon}
-                    alt=""
-                  />
-                )}
-                {isSmallSheXiang ? (
-                  <img
-                    src={smallshexiangkaiIcon}
-                    alt=""
-                  />
-                ) : (
-                  <img
-                    src={smallshexiangguanIcon}
-                    alt=""
-                  />
-                )}
-                {/* <img
+            {data &&
+              data.length &&
+              data.map((item: any, index: any) => {
+                return (
+                  <div className="right-name-box">
+                    <Avatar
+                      icon={<UserOutlined />}
+                      size={40}
+                    />
+                    <div className="right-name">
+                      <div className="name-top">{item.nickname}</div>
+                      {/* <div className="name-bottom">12</div> */}
+                    </div>
+                    <div className="right-icon">
+                      {isSmallYuYin ? (
+                        <img
+                          src={smallyuyinkaiIcon}
+                          alt=""
+                        />
+                      ) : (
+                        <img
+                          src={smallyuyinguanIcon}
+                          alt=""
+                        />
+                      )}
+                      {isSmallSheXiang ? (
+                        <img
+                          src={smallshexiangkaiIcon}
+                          alt=""
+                        />
+                      ) : (
+                        <img
+                          src={smallshexiangguanIcon}
+                          alt=""
+                        />
+                      )}
+                      {/* <img
                   src={shanchengyuan}
                   alt=""
                 /> */}
-              </div>
-            </div>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
           {isAdmin && !isClose ? (
             <div className="room-right-bottom">

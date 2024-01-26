@@ -10,36 +10,78 @@ import yuyinguan from "../../assets/meeting/yuyinguan.png";
 import shexiangkai from "../../assets/meeting/shexiangkai.png";
 import shengyinkai from "../../assets/meeting/shengyinkai.png";
 import yuyinkai from "../../assets/meeting/yuyinkai.png";
-import { Button, Input, Modal } from "antd";
+import { Button, Input, Modal, message } from "antd";
+import { useSelector, useDispatch } from "react-redux";
+import { setRoom } from "../../actions/roomActions";
+import { store } from "../../store/store";
+
 type Props = {};
 
 export default function Index({}: Props) {
+  const dispatch = useDispatch();
+
   const history = useHistory();
+  const vcs = useSelector((state: any) => state.vcs.vcsClient);
+  console.log(vcs, "vcs");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSheXiang, setIsSheXiang] = useState(false);
-  const [isYuYin, setIsyuyin] = useState(false);
-  const [isShengYin, setIsShengYin] = useState(false);
+  const [isYuYin, setIsyuyin] = useState(true);
+  const [isShengYin, setIsShengYin] = useState(true);
   const [isMeetingStatus, setIsMeetingStatus] = useState(0);
   const [meetId, setMeetId] = useState("");
-  const [meetName, setMeetName] = useState("");
+  const [meetName, setMeetName] = useState<any>("");
   useEffect(() => {
     if (sessionStorage.getItem("token")) {
     } else {
       history.replace("/login");
     }
+    //姓名传入
+    let nickname = sessionStorage.getItem("nickname");
+    setMeetName(nickname);
+    console.log(sessionStorage.getItem("nickname"));
   }, []);
   const handleOk = () => {
-    setIsModalOpen(false);
-    history.push("/room");
+    // setIsModalOpen(false);
+    sessionStorage.removeItem("options");
+    if (meetId == "") {
+      message.info("请输入会议ID");
+      return;
+    }
+    if (isMeetingStatus !== 0) {
+      // vcs
+      //   .enterRoom({ room_no: meetId })
+      //   .then((room: any) => {
+      //     console.log(room, "room");
+      //     //修改昵称
+      //     room.updateAccount({ nickname: meetName });
+      //   })
+      //   .catch((err: any) => {
+      //     console.log(err, "err");
+      //   });
+      history.push(`/room?id=${meetId}&name=${meetName}`);
+    } else {
+      vcs
+        .createConference({
+          type: 1,
+          duration: 1800,
+          title: meetId,
+        })
+        .then((res: any) => {
+          console.log(res, "即时会议res");
+          history.push(`/room?id=${res.data.room.no}&name=${meetName}`);
+        });
+    }
   };
 
   const handleCancel = () => {
     setIsModalOpen(false);
     setMeetId("");
-    setMeetName("");
+    // setMeetName("");
   };
   const oepnModals = () => {
     setIsMeetingStatus(0);
+    let nickname = sessionStorage.getItem("nickname");
+    setMeetId(nickname! + "的会议");
     setIsModalOpen(true);
   };
   const JoinModals = () => {
@@ -56,11 +98,9 @@ export default function Index({}: Props) {
     setIsSheXiang(!isSheXiang);
   };
   const idChange = (e: any) => {
-    console.log(e.target.value);
     setMeetId(e.target.value);
   };
   const nameChange = (e: any) => {
-    console.log(e.target.value);
     setMeetName(e.target.value);
   };
   return (
@@ -101,7 +141,9 @@ export default function Index({}: Props) {
           <div className="modal-title">
             {isMeetingStatus == 0 ? "即时会议" : "加入会议"}
           </div>
-          <div className="modal-input-title">会议ID</div>
+          <div className="modal-input-title">
+            {isMeetingStatus == 0 ? "会议名称" : "会议ID"}
+          </div>
           <Input
             placeholder="请输入会议ID"
             className="modal-input"

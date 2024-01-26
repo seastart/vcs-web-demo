@@ -9,14 +9,13 @@ import noCheckedIcon from "../../assets/common/no-checked.png";
 import isCheckedIcon from "../../assets/common/is-checked.png";
 import { Form, Input, Button, message } from "antd";
 import "./index.scss";
-import { VCSContext } from "../../VCSContext";
 import { useSelector } from "react-redux";
 
 type Props = {};
 
 export default function Index({}: Props) {
   const history = useHistory();
-  const vcs = useSelector((state: any) => state.vcsClient);
+  const vcs = useSelector((state: any) => state.vcs.vcsClient);
   console.log(vcs, "1111");
   const [isChecked, setIsChekced] = useState<Boolean>(false);
   const [vcss, setVcss] = useState(vcs);

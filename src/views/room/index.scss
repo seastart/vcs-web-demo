@@ -68,10 +68,9 @@
             height: 100%;
             display: flex; // 启用Flexbox布局
             flex-direction: column; // 子元素垂直排列
-            justify-content: space-between; // 子元素在主轴（垂直方向）平均分布
             .video-right-time {
-              flex-grow: 1; /* 所有.video-right-time将等比放大以填充父容器 */
               margin: 12px 12px 0;
+              height: 141px;
               background-color: #1a1c22;
               cursor: pointer;
               border-radius: 4px;
@@ -201,6 +200,7 @@
         height: 87%;
         padding: 20px 16px 20px 20px;
         .right-name-box {
+          margin-bottom: 10px;
           display: flex;
           align-items: center;
           justify-content: flex-start;

@@ -15,8 +15,7 @@ interface DropdownItem {
   label: JSX.Element;
 }
 export default function Index({}: Props) {
-  const vcs = useSelector((state: any) => state.vcsClient);
-  console.log(vcs, "111");
+  const vcs = useSelector((state: any) => state.vcs.vcsClient);
   const location = useLocation();
   const history = useHistory();
   const [items, setItems] = useState<MenuProps["items"]>([]);
