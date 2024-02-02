@@ -4,6 +4,7 @@ import Login from "../views/login";
 import Register from "../views/register";
 import Forget from "../views/forget";
 import Room from "../views/room";
+import VideoPlay from "../views/videoPlay";
 const routes: RouteConfig = [
   {
     path: "/",
@@ -25,6 +26,10 @@ const routes: RouteConfig = [
   {
     path: "/room",
     component: Room,
+  },
+  {
+    path: "/videoPlay",
+    component: VideoPlay,
   },
 ];
 export default routes;

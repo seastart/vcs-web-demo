@@ -91,6 +91,11 @@ export default function Index({}: Props) {
     ];
     setItems(dropDwonArr);
   }, []);
+  const goVideo = () => {
+    console.log(123);
+    history.push("/videoPlay");
+    setIsModalOpen(false);
+  };
   return (
     <div className="header-container">
       <div className="header-content">
@@ -135,7 +140,10 @@ export default function Index({}: Props) {
         footer={null}
       >
         <div className="headers-modal-content">
-          <div className="headers-modal-box">
+          <div
+            className="headers-modal-box"
+            onClick={goVideo}
+          >
             <div className="headers-box-left">
               <div className="headers-left-top">某某某的个人会议室</div>
               <div className="headers-left-bottom">

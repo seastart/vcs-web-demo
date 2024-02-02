@@ -45,6 +45,8 @@ export default function Index({}: Props) {
   const handleOk = () => {
     // setIsModalOpen(false);
     sessionStorage.removeItem("options");
+    sessionStorage.removeItem("isSheXiang");
+    sessionStorage.removeItem("isYuYin");
     store.dispatch(setYuYin(isYuYin));
     store.dispatch(setSheXiang(isSheXiang));
 
