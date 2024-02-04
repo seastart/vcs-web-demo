@@ -44,6 +44,7 @@ export default function Index({}: Props) {
           message.success("注册并登录成功");
           sessionStorage.setItem("token", r.data.token);
           sessionStorage.setItem("nickname", r.data.account.nickname);
+          sessionStorage.setItem("accid", r.data.account.id);
 
           history.push("/");
         }

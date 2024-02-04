@@ -72,7 +72,7 @@ export default function Index({}: Props) {
   const [checkboxLabel, setCheckboxLabel] = useState(""); //弹窗的内容
   const [hover, setHover] = useState(false); //共享屏幕的鼠标移入
   const [resolutionRadio, setResolutionRadio] = useState(2); //共享屏幕的鼠标移入
-
+  const [webURL, setWebURL] = useState<any>("");
   const [isCheck, setIsCheck] = useState(0); //弹窗类型 0全体静音 1解除全体静音 2结束会议 3离开会议 4云录制
   const [data, setData] = useState<any>([]); //维护成员列表以及各种信息
   // constal, setVal] = useState<any>([]); //维护成员触发
@@ -80,6 +80,7 @@ export default function Index({}: Props) {
   //成员小窗口的部分逻辑
   const [displayIndex, setDisplayIndex] = useState(0); // 从第0位开始显示，因为第一位始终显示
   const [displayedMembers, setDisplayedMembers] = useState<any>([]); // 从第0位开始显示，因为第一位始终显示
+  const displayedMembersRef = useRef(displayedMembers);
   const MAX_DISPLAY = 4; // 最多展示的成员数
   const MAX_DISPLAY_EXCEPT_FIRST = 3; // 定义最大显示数量，减去始终显示的第一个成员
   const [selectedId, setSelectedId] = useState<any>(null); //选中小窗口的唯一标识
@@ -92,19 +93,23 @@ export default function Index({}: Props) {
   const ssRef = useRef<any>();
 
   const [aa, setaa] = useState<any>({}); // 存储语音a对象
+  const aaRef = useRef<any>();
+
   const [rr, setrr] = useState<any>(); // 存储混音流
   const [sa, setsa] = useState<any>(); // 存储小流
   const [gx, setGx] = useState<any>(); // 共享桌面流
-  const gxRef = useRef();
+  const gxRef = useRef<any>();
+  const gxsRef = useRef<any>();
   const [videoVis, setVideoVis] = useState<any>(false); // 切换摄像头防止过快点击
   const [audioVis, setAudioVis] = useState<any>(false); // 切换麦克风防止过快点击
+  const [white, setWhite] = useState<any>(false); // 共享电子白板
   const [videoSmallStatus, setVideoSmallStatus] = useState<any>(0); // 小窗口选中别人后的状态 0小窗口选择的就是我自己，1小窗口选择的不是我但是没开摄像头 2小窗口选择的不是我，开启了摄像头
 
   const [activeStreams, setActiveStreams] = useState<any>(new Map());
   const [isModalOpen, setIsModalOpen] = useState(false); //设置弹窗开启
   const [streams, setStreams] = useState(new Map());
   let ids = JSON.parse(sessionStorage.getItem("options") || "{}");
-
+  let userId = sessionStorage.getItem("accid");
   useEffect(() => {
     setIsYuYin(isYuyin);
     setIsSheXiang(isSheXiangStatus);
@@ -177,6 +182,7 @@ export default function Index({}: Props) {
       isVideo: null,
       stream: null,
       shouldBeVisible: null,
+      role: null,
     };
     setData((prevMembers: any) => {
       // 如果已经包含了当前用户，则不添加
@@ -232,6 +238,7 @@ export default function Index({}: Props) {
       .then((room: any) => {
         console.log(room, "room");
         // store.dispatch(setRoom(room));
+        setWebURL(room.options.wbPrefix); //存储共享白板链接
         //修改昵称
         setRooms(room);
         roomsRef.current = room;
@@ -268,6 +275,7 @@ export default function Index({}: Props) {
           room.openAudio({}).then((a: any) => {
             //开始推流
             setaa(a);
+            aaRef.current = a;
             room.updateAccount({ audio_state: 0 }, true);
             a.connect().then(() => {
               // a.play(); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
@@ -303,6 +311,8 @@ export default function Index({}: Props) {
       .enterRoom({ room_no: id, audioMixer: true })
       .then((room: any) => {
         console.log(room, "room");
+        setRooms(room);
+        setWebURL(room.options.wbPrefix); //存储共享白板链接
         // store.dispatch(setRoom(room));
         //修改昵称
         room.updateAccount({ nickname }, true);
@@ -317,7 +327,7 @@ export default function Index({}: Props) {
               setIsVideoVisible(false);
               s.addPlay("videoDom"); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
               console.log(room.options, "rooms");
-              s.addPlay(`video-right-time-${rooms.options.account.id}`); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
+              s.addPlay(`video-right-time-${room.options.account.id}`); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
             });
           });
         }
@@ -325,13 +335,13 @@ export default function Index({}: Props) {
           room.openAudio({}).then((a: any) => {
             //开始推流
             setaa(a);
+            aaRef.current = a;
             room.updateAccount({ audio_state: 0 }, true);
             a.connect().then(() => {
               // a.play();
             });
           });
         }
-        setRooms(room);
         roomsRef.current = room;
 
         onAfterEnterRoom(room);
@@ -359,11 +369,15 @@ export default function Index({}: Props) {
     room.on("share", onShare);
     room.on("closed", onRoomClosed);
     room.on("room-end", onRoomEnd);
+    room.on("my-account", onMyAccount);
   };
   //监听事件
   // 成员进入
   const onMemberIn = (vcsMember: any) => {
-    console.log(vcsMember, "成员进入");
+    console.log(roomsRef.current, "成员进入");
+    if (vcsMember.options.account.id === userId) {
+      return;
+    }
     let newMember = {
       nickname: vcsMember.options.account.nickname,
       id: vcsMember.options.account.id,
@@ -373,15 +387,20 @@ export default function Index({}: Props) {
       audio_state: vcsMember.options.account.audio_state,
       video_state: vcsMember.options.account.video_state,
       members: vcsMember,
+      role: vcsMember.options.account.role,
     };
     // 更新成员列表，添加新成员
     setData((prevMembers: any) => {
       // 首先确保prevMembers是一个数组
       const array = Array.isArray(prevMembers) ? prevMembers : [];
+      console.log(array.concat(newMember), "hahahahahhaha");
       return array.concat(newMember);
     });
   };
   const onMemberUpdate = (vcsMember: any) => {
+    if (vcsMember.options.account.id === userId) {
+      return;
+    }
     console.log(vcsMember, "变化了");
 
     setData((prevMembers: any) =>
@@ -422,48 +441,7 @@ export default function Index({}: Props) {
       return array.filter((member) => member.id !== memberId);
     });
   };
-  const onShare = (vcsMember: any) => {
-    console.log(vcsMember, "onShare");
-    //因为闭包的原因 数据拿不到，存到ref中
-    const currentRooms = roomsRef.current;
-    const currentGx = gxRef.current; // 从 ref 中获取 gx
-    const currentss = ssRef.current; // 从 ref 中获取 ss
-    setData((prevMembers: any) =>
-      prevMembers.map((member: any) => {
-        // 如果当前成员不是共享的成员，移除播放
-        if (member.id !== currentRooms.options.account.id) {
-          // 假设members是具有removePlay方法的实例
-          console.log(member, "members");
-          // member.members.removePlay("video-right-time-" + member.id);
-          // // 更新成员状态
-          // return {
-          //   ...member,
-          //   video_state: 1,
-          // };
-        }
-        // 对于共享的成员，保持原样
-        return member;
-      })
-    );
-    if (currentss) {
-      console.log(currentss, "currentss");
-      currentss.removePlay("videoDom", true);
-      currentss.removePlay(
-        "video-right-time-" + currentRooms.options.account.id,
-        true
-      );
-      console.log(data, "datashhah");
-    }
-    console.log(currentRooms, "currentRooms");
-    console.log(gx, "gx");
-    if (vcsMember.type == 3) {
-      if (vcsMember.accId == currentRooms.options.account.id) {
-        console.log(currentGx, "currentGx");
-        //此时证明是自己的权限，可以进行推流操作
-        //此时需要使用gx
-      }
-    }
-  };
+
   const onRoomClosed = (r: any) => {};
   const onRoomEnd = (r: any) => {};
   //这里是小窗口的展示及页码切换逻辑
@@ -574,7 +552,157 @@ export default function Index({}: Props) {
   useEffect(() => {
     const displayedMembers = getDisplayedMembers();
     setDisplayedMembers(displayedMembers);
+    displayedMembersRef.current = displayedMembers;
   }, [displayIndex, data, isSheXiang, isYuYin, getDisplayedMembers]);
+  const onShare = (args: any) => {
+    console.log(args, "onShare");
+    //因为闭包的原因 数据拿不到，存到ref中
+    const currentRooms = roomsRef.current;
+    const currentGx = gxRef.current; // 从 ref 中获取 gx
+    const currentss = ssRef.current; // 从 ref 中获取 ss
+    const currentGxs = gxsRef.current; // 从 ref 中获取 别人的共享
+    const displayedMembersCurrent = displayedMembersRef.current; // 从 ref 中获取 displayedMembers
+    console.log(currentGx, "currentGx");
+    console.log(currentRooms, "currentRooms");
+    if (currentss) {
+      console.log(currentss, "currentss");
+      console.log(currentRooms, "currentss");
+      currentRooms.updateAccount({ video_state: 1 }, true);
+      currentss.removePlay("videoDom", true);
+      console.log(displayedMembersCurrent, "displayedMembersCurrent");
+      currentss.removePlay(
+        "video-right-time-" + currentRooms.options.account.id,
+        true
+      );
+    }
+    displayedMembersCurrent &&
+      displayedMembersCurrent.length > 0 &&
+      displayedMembersCurrent.map((item: any) => {
+        if (displayedMembersCurrent.id !== currentRooms.options.account.id) {
+          if (displayedMembersCurrent.video_state == 0) {
+            console.log(displayedMembersCurrent.stream, "stream");
+            displayedMembersCurrent.stream.removePlay(
+              "video-right-time-" + displayedMembersCurrent.id,
+              true
+            );
+          }
+        }
+      });
+    if (args.type == 3) {
+      setWhite(false);
+      console.log(displayedMembersCurrent, "displayedMembersCurrent");
+      //关闭小窗口成员的流
+      if (args.accId == currentRooms.options.account.id) {
+        //开启自己共享
+        currentGx.connect().then((s: any) => {
+          console.log(s, "ss");
+          currentGx.addPlay("videoDom");
+        });
+        setIsVideoVisible(false);
+        setIsClose(true); // 更新状态以关闭面板
+        setIsZhanKai(true); // 更新状态以折叠视频面板
+        console.log(currentGx, "currentGx");
+        setIsSheXiang(false);
+        //此时证明是自己的权限，可以进行推流操作
+        //此时需要使用gx
+      } else {
+        setIsClose(true); // 更新状态以关闭面板
+        setIsZhanKai(true); // 更新状态以折叠视频面板
+        setIsSheXiang(false);
+        currentGx?.removePlay("videoDom");
+        console.log(args, "args");
+        let member = currentRooms.getMember(args.accId);
+        if (member) {
+          member
+            .pullVideo({
+              trackMask: args.streamId,
+              // channelType:
+            })
+            .then((s: any) => {
+              s.addPlay("videoDom");
+              gxsRef.current = s;
+              setIsVideoVisible(false);
+            });
+        }
+      }
+    } else if (args.type == 1) {
+      setIsVideoVisible(false);
+      setIsClose(true); // 更新状态以关闭面板
+      setIsZhanKai(true); // 更新状态以折叠视频面板
+      setIsSheXiang(false);
+      setWhite(true);
+    } else {
+      console.log(gxsRef.current, "111111");
+      currentGxs?.removePlay("videoDom");
+      currentGx?.removePlay("videoDom");
+      setIsVideoVisible(true);
+      setIsClose(false); // 更新状态以关闭面板
+      setIsZhanKai(false); // 更新状态以折叠视频面板
+      setWhite(false);
+    }
+  };
+  const onMyAccount = (acc: any) => {
+    console.log(acc, "初始值！");
+    if (acc.audio_state !== null) {
+      console.log(122);
+      if (acc.account.audio_state == 0 && isYuYin == false) {
+        //主持人请求打开我的麦克风
+        allUnMutes();
+      } else {
+        console.log(aaRef.current, "111");
+        aaRef.current.close();
+        roomsRef.current.updateAccount({ audio_state: 1 }, true);
+        setAudioVis(false);
+        setIsYuYin(false);
+      }
+    }
+    if (acc.account.role !== null) {
+      if (acc.account.role !== 0) {
+        setData((prevData: any) => {
+          // 确保prevData是一个数组且至少有一个元素
+          if (Array.isArray(prevData) && prevData.length > 0) {
+            // 创建一个新的数组
+            const newData = [...prevData];
+
+            // 更新数组的第一个元素，修改它的role属性
+            newData[0] = {
+              ...newData[0],
+              role: acc.account.role, // 假设您想更新的属性是role
+            };
+            console.log(newData, "newData");
+            // 返回更新后的数组
+            return newData;
+          }
+
+          // 如果prevData不是数组或为空，则直接返回原状态
+          return prevData;
+        });
+        //角色变成了普通成员
+      } else {
+        //角色变成了主持人
+        setData((prevData: any) => {
+          // 确保prevData是一个数组且至少有一个元素
+          if (Array.isArray(prevData) && prevData.length > 0) {
+            // 创建一个新的数组
+            const newData = [...prevData];
+
+            // 更新数组的第一个元素，修改它的role属性
+            newData[0] = {
+              ...newData[0],
+              role: acc.account.role, // 假设您想更新的属性是role
+            };
+            console.log(newData, "newData");
+            // 返回更新后的数组
+            return newData;
+          }
+
+          // 如果prevData不是数组或为空，则直接返回原状态
+          return prevData;
+        });
+      }
+    }
+    rooms.updateAccount(acc, true);
+  };
   // 点击下箭头的处理函数
   const handleNext = () => {
     // 确保不会超出数据范围，并且留下至少一个成员来显示
@@ -596,7 +724,12 @@ export default function Index({}: Props) {
     setSelectedId(item.id); // 更新选中的盒子 id
     setSelectedData(item);
     setIsVideoVisible(false);
-    if (item.id === data[0].id && ss && Object.keys(ss).length !== 0) {
+    if (
+      item.id === data[0].id &&
+      ss &&
+      Object.keys(ss).length !== 0 &&
+      item.video_state == 0
+    ) {
       ss.addPlay("videoDom");
       setIsVideoVisible(false);
       setVideoSmallStatus(0);
@@ -705,10 +838,13 @@ export default function Index({}: Props) {
   };
   //当前展示的成员
   const closeRight = () => {
+    setIsClose(!isClose);
+  };
+  useEffect(() => {
     const roomLeftBox = document.querySelector(".room-left-box");
     const video = document.querySelector(".video");
     const roomRightBox = document.querySelector(".room-right-box");
-    if (!isClose) {
+    if (isClose) {
       // 注意这里直接使用了 !isClose
       roomLeftBox?.classList.add("room-left-box-close");
       roomRightBox?.classList.add("room-right-box-close");
@@ -718,20 +854,22 @@ export default function Index({}: Props) {
       roomRightBox?.classList.remove("room-right-box-close");
       video?.classList.remove("video-close");
     }
-    setIsClose(!isClose);
-  };
+  }, [isClose]);
   const zhankaiStatus = () => {
+    setIsZhanKai(!iszhankai);
+  };
+  useEffect(() => {
     const videoBox = document.querySelector(".video");
     const videoRightBox = document.querySelector(".video-right");
-    if (!iszhankai) {
+    if (iszhankai) {
       videoBox?.classList.add("video-hide");
       videoRightBox?.classList.add("video-right-hide");
     } else {
       videoBox?.classList.remove("video-hide");
       videoRightBox?.classList.remove("video-right-hide");
     }
-    setIsZhanKai(!iszhankai);
-  };
+  }, [iszhankai]);
+
   //底部弹窗值和事件
   const [value, setValue] = useState("default");
   const [valueTwo, setValueTwo] = useState("");
@@ -766,6 +904,8 @@ export default function Index({}: Props) {
     rooms.openAudio({ deviceId: e.target.value }).then((a: any) => {
       //开始推流
       setaa(a);
+      aaRef.current = a;
+
       rooms.updateAccount({ audio_state: 0 }, true);
       a.connect().then(() => {
         // a.play();
@@ -790,6 +930,8 @@ export default function Index({}: Props) {
       rooms.openAudio({}).then((a: any) => {
         //开始推流
         setaa(a);
+        aaRef.current = a;
+
         rooms.updateAccount({ audio_state: 0 }, true);
         a.connect().then(() => {
           // a.play();
@@ -865,6 +1007,13 @@ export default function Index({}: Props) {
     setCheckboxLabel("您确定解除全体静音吗");
     setIsDialogVisible(true);
   };
+  //请求打开你的麦克风
+  const allUnMutes = () => {
+    setModalTitle("提示");
+    setIsCheck(4);
+    setCheckboxLabel("主持人请求打开你的麦克风");
+    setIsDialogVisible(true);
+  };
   //结束会议
   const overMute = () => {
     setModalTitle("结束会议");
@@ -890,11 +1039,18 @@ export default function Index({}: Props) {
   const handleConfirm = () => {
     if (isCheck == 0) {
       console.log("执行确认操作");
+      let datas = data;
+      let arr: any = [];
+      datas.map((item: any) => {
+        arr.push(item.id);
+      });
+      console.log(arr, "arr");
+      console.log(datas, "datas");
+      console.log(rooms.setMemberState, "setMemberState");
+      rooms.setMemberState(arr, 1);
+      setIsYuYin(false);
       message.info({
         content: "已开启全体静音",
-        style: {
-          marginTop: "40vh",
-        },
       });
     } else if (isCheck == 2) {
       if (rooms && rooms.getOptions().conf) {
@@ -921,6 +1077,32 @@ export default function Index({}: Props) {
 
         message.success("退出会议成功！");
         history.push("/");
+      });
+    } else if (isCheck == 1) {
+      let datas = data;
+      let arr: any = [];
+      datas.map((item: any) => {
+        arr.push(item.id);
+      });
+      rooms.setMemberState(arr, 1);
+
+      setIsYuYin(false);
+      message.info({
+        content: "已解除全体静音",
+      });
+    } else if (isCheck == 4) {
+      setIsYuYin(true);
+      sessionStorage.setItem("isYuYin", "1");
+      rooms.openAudio({}).then((a: any) => {
+        //开始推流
+        setaa(a);
+        aaRef.current = a;
+
+        rooms.updateAccount({ audio_state: 0 }, true);
+        a.connect().then(() => {
+          // a.play();
+          setAudioVis(false);
+        });
       });
     }
     // 在这里执行确认后的逻辑
@@ -959,18 +1141,31 @@ export default function Index({}: Props) {
         onended: () => {
           //手动停止共享
           console.log("共享推流被停止");
+          // closeRight();
+          // zhankaiStatus();
+          setIsClose(false); // 更新状态以关闭面板
+          setIsZhanKai(false); // 更新状态以折叠视频面板
+          // setIsVideoVisible(true);
           rooms.requestForStopingSharing();
         },
       })
       .then((g: any) => {
         //电子白板1 桌面3 结束0 轨道号不变
+        console.log(g, "g");
         rooms.requestForSharing({
           st: 3,
-          trackMask: 4,
+          trackMask: g.options.track.id,
         });
         setGx(g);
         gxRef.current = g; // 存储 gx 到 ref
       });
+  };
+  //共享电子白板
+  const openModleWhite = () => {
+    console.log("共享电子白板");
+    rooms.requestForSharing({
+      st: 1,
+    });
   };
   //顶部气泡弹窗
   const titleContent = (
@@ -1032,7 +1227,15 @@ export default function Index({}: Props) {
       >
         共享桌面
       </div>
-      <div style={{ color: "#999", fontSize: "14px", paddingBottom: "4px" }}>
+      <div
+        style={{
+          color: "#999",
+          fontSize: "14px",
+          paddingBottom: "4px",
+          cursor: "pointer",
+        }}
+        onClick={openModleWhite}
+      >
         共享电子白板
       </div>
     </div>
@@ -1082,41 +1285,42 @@ export default function Index({}: Props) {
             <div className="left-top-text">会议ID：{id}</div>
           </div>
           <div className="video-box">
-            <div
-              className="video"
-              id="videoDom"
-            >
+            {!white ? (
               <div
-                className="video-box-flex"
-                style={{ display: isVideoVisible ? "block" : "none" }}
+                className="video"
+                id="videoDom"
               >
-                <div className="video-avatar">
-                  <Avatar
-                    icon={<UserOutlined />}
-                    size={100}
-                  />
-                </div>
-                <div className="video-icon-box">
-                  <img
-                    src={smallGuanShiPin}
-                    alt=""
-                  />
-                  {isYuYin ? (
+                <div
+                  className="video-box-flex"
+                  style={{ display: isVideoVisible ? "block" : "none" }}
+                >
+                  <div className="video-avatar">
+                    <Avatar
+                      icon={<UserOutlined />}
+                      size={100}
+                    />
+                  </div>
+                  <div className="video-icon-box">
                     <img
-                      src={smallKaiYuYin}
+                      src={smallGuanShiPin}
                       alt=""
                     />
-                  ) : (
-                    <img
-                      src={smallGuanYuYin}
-                      alt=""
-                    />
-                  )}
+                    {isYuYin ? (
+                      <img
+                        src={smallKaiYuYin}
+                        alt=""
+                      />
+                    ) : (
+                      <img
+                        src={smallGuanYuYin}
+                        alt=""
+                      />
+                    )}
 
-                  <span>{selectedData.nickname}</span>
+                    <span>{selectedData.nickname}</span>
+                  </div>
                 </div>
-              </div>
-              {/* <div
+                {/* <div
                 className="video-shou"
                 onClick={zhankaiStatus}
                 style={{ display: isVideoVisible ? "block" : "none" }}
@@ -1133,7 +1337,16 @@ export default function Index({}: Props) {
                   />
                 )}
               </div> */}
-            </div>
+              </div>
+            ) : (
+              <iframe
+                className="video"
+                src={`${webURL}?roomId=${id}&userId=${userId}`}
+                style={{ border: "none" }} // 移除iframe的边框
+                allowFullScreen // 允许全屏
+              ></iframe>
+            )}
+
             {iszhankai ? (
               <div
                 className="video-shou"
@@ -1388,7 +1601,15 @@ export default function Index({}: Props) {
                         size={40}
                       />
                       <div className="right-name">
-                        <div className="name-top">{item.nickname}</div>
+                        <div className="name-top">
+                          <div>
+                            {item.nickname}
+                            {index == 0 ? " (我自己)" : ""}
+                          </div>
+                          <div style={{ textAlign: "left" }}>
+                            {item.role !== 0 && item.role ? "(主持人)" : ""}
+                          </div>
+                        </div>
                         {/* <div className="name-bottom">12</div> */}
                       </div>
                       <div className="right-icon">

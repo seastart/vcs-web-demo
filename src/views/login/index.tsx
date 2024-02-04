@@ -40,6 +40,7 @@ export default function Index({}: Props) {
         if (r.code === 200) {
           sessionStorage.setItem("token", r.data.token);
           sessionStorage.setItem("nickname", r.data.account.nickname);
+          sessionStorage.setItem("accid", r.data.account.id);
           console.log(r);
           message.success("登录成功");
           history.push("/");
