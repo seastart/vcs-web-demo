@@ -4,6 +4,7 @@ import { VCSContext } from "./VCSContext";
 import * as VCS from "./utils/vcs.js";
 import { store, persistor } from "./store/store";
 import { setVCSClient } from "./actions/vcsActions";
+import { setVersion } from "./actions/versionActions";
 import { Provider } from "react-redux";
 const { PersistGate } = require("redux-persist/integration/react");
 
@@ -17,6 +18,8 @@ function App() {
       "0a16828823ce41c5ad040be3ed384c14",
       "04ff1dae18ae4b1fb7057e239aa1ff03"
     );
+    console.log((VCS as any).VERSION, "VERSION");
+    store.dispatch(setVersion((VCS as any).VERSION));
     store.dispatch(setVCSClient(vcsClient));
   }, []);
   return (

@@ -21,7 +21,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   modalTitle, //弹窗的文字内容
   onCheckboxChange, // 使用这个函数
 }) => {
-  const [isChecked, setIsChecked] = useState(false);
+  const [isChecked, setIsChecked] = useState(true);
 
   const handleOk = () => {
     onConfirm();

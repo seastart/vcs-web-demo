@@ -13,7 +13,7 @@ import { useSelector } from "react-redux";
 type Props = {};
 
 export default function Index({}: Props) {
-  const vcsa = useSelector((state: any) => state.vcsClient);
+  const vcsa = useSelector((state: any) => state.vcs.vcsClient);
 
   const history = useHistory();
 

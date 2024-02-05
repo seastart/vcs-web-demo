@@ -47,6 +47,7 @@ export default function Index({}: Props) {
     sessionStorage.removeItem("options");
     sessionStorage.removeItem("isSheXiang");
     sessionStorage.removeItem("isYuYin");
+    sessionStorage.removeItem("isYuYinStatus");
     store.dispatch(setYuYin(isYuYin));
     store.dispatch(setSheXiang(isSheXiang));
 
@@ -212,7 +213,7 @@ export default function Index({}: Props) {
                 </>
               )}
             </div>
-            <div className="modal-icon-name-box">
+            {/* <div className="modal-icon-name-box">
               {!isShengYin ? (
                 <>
                   <img
@@ -234,7 +235,7 @@ export default function Index({}: Props) {
                   <div className="modal-icon-title">开启扬声器</div>
                 </>
               )}
-            </div>
+            </div> */}
           </div>
           <div className="modal-btn-box">
             <Button

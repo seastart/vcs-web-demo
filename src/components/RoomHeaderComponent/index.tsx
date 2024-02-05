@@ -76,7 +76,11 @@ export default function Index({}: Props) {
             <div className="avatar">
               <Avatar icon={<UserOutlined />} />
             </div>
-            <div className="avatar-name">用户123456</div>
+            <div className="avatar-name">
+              {sessionStorage.getItem("nickname")
+                ? sessionStorage.getItem("nickname")
+                : ""}
+            </div>
 
             <div className="avatar-dropdown">
               <Dropdown
