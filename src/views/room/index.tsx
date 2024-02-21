@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import RoomHeaderComponent from "../../components/RoomHeaderComponent";
 import ConfirmDialog from "../../components/ConfrimModal"; // 导入上面创建的组件
 import { useHistory, useLocation } from "react-router-dom";
+import { store } from "../../store/store";
 
 import topPng from "../../assets/meeting/top-png.png";
 import smallGuanShiPin from "../../assets/meeting/guanshipin-small.png";
@@ -28,6 +29,8 @@ import { UserOutlined, DownOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import type { RadioChangeEvent, MenuProps } from "antd";
 import type { CheckboxChangeEvent } from "antd/es/checkbox";
+import { setRoom } from "../../actions/roomActions";
+
 import {
   Avatar,
   Button,
@@ -105,6 +108,7 @@ export default function Index({}: Props) {
   const [videoVis, setVideoVis] = useState<any>(false); // 切换摄像头防止过快点击
   const [audioVis, setAudioVis] = useState<any>(false); // 切换麦克风防止过快点击
   const [white, setWhite] = useState<any>(false); // 共享电子白板
+  const [isOptions, setIsOptions] = useState<any>(true);
   const [videoSmallStatus, setVideoSmallStatus] = useState<any>(0); // 小窗口选中别人后的状态 0小窗口选择的就是我自己，1小窗口选择的不是我但是没开摄像头 2小窗口选择的不是我，开启了摄像头
 
   const [activeStreams, setActiveStreams] = useState<any>(new Map());
@@ -115,7 +119,6 @@ export default function Index({}: Props) {
   let ids = JSON.parse(sessionStorage.getItem("options") || "{}");
   let userId = sessionStorage.getItem("accid");
   useEffect(() => {
-    console.log(isYuyin, "isYuyin");
     setIsYuYin(isYuyin);
     if (isYuyin) {
       sessionStorage.setItem("isYuYinStatus", "1");
@@ -135,9 +138,8 @@ export default function Index({}: Props) {
     vcs.enumDevices().then((res: any) => {
       console.log(res, "枚举设备");
       let audioOutputDevices = res.filter(
-        (res: any) => res.kind === "audiooutput"
+        (res: any) => res.kind === "audioinput"
       );
-      audioOutputDevices;
 
       setAudioinput(audioOutputDevices);
       console.log(audioOutputDevices);
@@ -244,13 +246,46 @@ export default function Index({}: Props) {
       //   });
     };
   }, [rr]);
+  //浏览器回退后退出登录
+  useEffect(() => {
+    // 监听历史对象的变化
+    let roomsa = rooms;
+    console.log(roomsa, "rooms,退出");
+    const unlisten = history.listen((location, action) => {
+      let roomsas = roomsa;
+      console.log(roomsas, "rooms,退出1");
+      if (action === "POP") {
+        // 执行你想要的操作，例如退出会议
+        if (rooms) {
+          // 如果 rooms 对象存在，则调用退出会议的方法
+          rooms.close().finally(() => {
+            setRooms(null);
+            roomsRef.current = null;
+            clearTimer();
+            message.success("退出会议成功！");
+          });
+        }
+      }
+    });
 
+    // 组件卸载时取消监听
+    return () => {
+      unlisten();
+    };
+  }, [history, rooms]);
+  //设备的插拔返回事件
+  useEffect(() => {
+    navigator.mediaDevices.ondevicechange = (event) => {
+      console.log(event, "event");
+      message.info("设备已改变");
+    };
+  }, []);
   //无状态刷新
   const resumeRoom = (option: any) => {
     vcs
       .resumeRoom(option)
       .then((room: any) => {
-        // store.dispatch(setRoom(room));
+        store.dispatch(setRoom(room));
         setWebURL(room.options.wbPrefix); //存储共享白板链接
         //修改昵称
         setRooms(room);
@@ -269,6 +304,7 @@ export default function Index({}: Props) {
             s.connect().then(() => {
               setIsVideoVisible(false);
               s.addPlay("videoDom");
+              s.setMcuRecord();
               // s.addPlay(`video-right-time-${ids?.account.id}`);
             });
           });
@@ -331,7 +367,7 @@ export default function Index({}: Props) {
         console.log(room, "room");
         setRooms(room);
         setWebURL(room.options.wbPrefix); //存储共享白板链接
-        // store.dispatch(setRoom(room));
+        store.dispatch(setRoom(room));
         //修改昵称
         room.updateAccount({ nickname }, true);
         console.log(isYuYin, room.getRoom().relieve_astate, "哈哈哈");
@@ -370,6 +406,7 @@ export default function Index({}: Props) {
               console.log("我有值了！");
               // setTimeout(() => {
               s.addPlay(`video-right-time-${room.options.account.id}`);
+              s.setMcuRecord();
             });
           });
         }
@@ -397,6 +434,7 @@ export default function Index({}: Props) {
     room.on("closed", onRoomClosed);
     room.on("room-end", onRoomEnd);
     room.on("my-account", onMyAccount);
+    room.on("room", onRoomUpdate);
   };
 
   //监听事件
@@ -469,7 +507,18 @@ export default function Index({}: Props) {
       return array.filter((member) => member.id !== memberId);
     });
   };
+  const onRoomUpdate = (room: any) => {
+    console.log(room, "11111qqqrrr");
+    if (room.mcu_mode === 0) {
+      //没开启
+    } else {
+      console.log(room, "122211");
+      setLu(true);
 
+      //开启了，
+      //如果正在共享电子白板，开启白板推流
+    }
+  };
   const onRoomClosed = (r: any) => {};
   const onRoomEnd = (r: any) => {};
   //这里是小窗口的展示及页码切换逻辑
@@ -541,6 +590,7 @@ export default function Index({}: Props) {
           setActiveStreams(new Map(activeStreams));
           //这里我们得到了关于视频的VCSStream对象，同样也不需要调用connect，s对象需要自己保存
           s.addPlay(streamContainerId);
+          s.setMcuRecord();
           console.log(streamContainerId, "streamContainerId");
         } catch (err) {
           console.log(err);
@@ -612,6 +662,7 @@ export default function Index({}: Props) {
         currentGx.connect().then((s: any) => {
           console.log(s, "ss");
           currentGx.addPlay("videoDom");
+          // currentss.setMcuRecord();
         });
         setIsVideoVisible(false);
         setIsClose(true); // 更新状态以关闭面板
@@ -663,6 +714,7 @@ export default function Index({}: Props) {
       setIsClose(false); // 更新状态以关闭面板
       setIsZhanKai(false); // 更新状态以折叠视频面板
       setWhite(false);
+      setIsOptions(true);
       setIsGongXiang(true);
     }
   };
@@ -832,7 +884,7 @@ export default function Index({}: Props) {
       console.log("我是其他人,且开启了摄像头！");
       setVideoSmallStatus(2);
       setIsVideoVisible(false);
-
+      console.log(item, "item");
       item.members
         .pullVideo({
           streamType: 0,
@@ -926,8 +978,15 @@ export default function Index({}: Props) {
 
   const sheXiangChange = (e: RadioChangeEvent) => {
     if (isSheXiang) {
-      ss.close();
-
+      setSelectedId(displayedMembers[0].id); // 更新选中的盒子 id
+      setSelectedData(displayedMembers[0]);
+      if (ss) {
+        ss.removePlay("videoDom", true);
+        ss.removePlay(`video-right-time-${data[0].id}`, true);
+      }
+      if (selectedData && selectedData.stream) {
+        selectedData.stream.removePlay("videoDom", true);
+      }
       rooms.updateAccount({ video_state: 1 }, true);
 
       rooms.openVideo({ deviceId: e.target.value }).then((s: any) => {
@@ -940,6 +999,7 @@ export default function Index({}: Props) {
           setIsVideoVisible(false);
 
           s.addPlay("videoDom"); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
+          s.addPlay(`video-right-time-${data[0].id}`, true);
         });
       });
       console.log("radio checked", e.target.value);
@@ -1006,6 +1066,10 @@ export default function Index({}: Props) {
   };
   //点击摄像头的状态
   const shipinStatus = () => {
+    if (!isGongXiang) {
+      message.info("正在共享中，暂停使用视频");
+      return;
+    }
     if (videoVis) {
       message.info("请不要过快切换摄像头");
       return;
@@ -1033,21 +1097,27 @@ export default function Index({}: Props) {
       setVideoVis(false);
     } else {
       sessionStorage.setItem("isSheXiang", "1");
+      if (selectedData && selectedData.stream) {
+        selectedData.stream.removePlay("videoDom", true);
+      }
 
       rooms.openVideo({ deviceId: valueTwo }).then((s: any) => {
         //开始推流
         setss(s);
         ssRef.current = s;
-
         rooms.updateAccount({ video_state: 0 }, true);
         s.connect().then(() => {
           // if (sa) {
           //   sa.stop();
           //   console.log(sa);
           // }
+
           setIsVideoVisible(false);
           setSelectedId(displayedMembers[0].id); // 更新选中的盒子 id
           setSelectedData(displayedMembers[0]);
+          console.log(displayedMembers, "displayedMembers");
+
+          // s.removePlay("videoDom", true);
           s.addPlay("videoDom"); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
           s.addPlay(`video-right-time-${data[0].id}`); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
           setVideoVis(false);
@@ -1188,6 +1258,9 @@ export default function Index({}: Props) {
   // *
   // *
   const optionsModal = () => {
+    if (!isOptions) {
+      return;
+    }
     setIsModalOpen(true);
   };
 
@@ -1198,7 +1271,7 @@ export default function Index({}: Props) {
   const handleCancel = () => {
     setIsModalOpen(false);
   };
-  //显示正在说话成员
+  //开启云录制
   const optionTalk = (e: any) => {
     if (e.target.checked) {
       setLu(true);
@@ -1220,8 +1293,6 @@ export default function Index({}: Props) {
   };
   //共享桌面
   const openModle = () => {
-    console.log(111);
-    console.log(rooms, "roons");
     rooms
       .openScreen({
         withDesktopAudio: false,
@@ -1230,6 +1301,7 @@ export default function Index({}: Props) {
         onended: () => {
           //手动停止共享
           console.log("共享推流被停止");
+          setIsOptions(true);
           // closeRight();
           // zhankaiStatus();
           setIsClose(false); // 更新状态以关闭面板
@@ -1241,6 +1313,7 @@ export default function Index({}: Props) {
       })
       .then((g: any) => {
         //电子白板1 桌面3 结束0 轨道号不变
+        setIsOptions(false);
         console.log(g, "g");
         setIsGongXiang(false);
         rooms.requestForSharing({
@@ -1254,7 +1327,7 @@ export default function Index({}: Props) {
   //共享电子白板
   const openModleWhite = () => {
     console.log("共享电子白板");
-
+    setIsOptions(false);
     rooms.requestForSharing({
       st: 1,
     });
@@ -1402,7 +1475,7 @@ export default function Index({}: Props) {
       let res = await vcs.enumDevices();
       console.log(res, "枚举设备");
       let audioOutputDevices = res.filter(
-        (res: any) => res.kind === "audiooutput"
+        (res: any) => res.kind === "audioinput"
       );
       setAudioinput(audioOutputDevices);
       console.log(audioOutputDevices);
@@ -1590,12 +1663,14 @@ export default function Index({}: Props) {
               )}
 
               <div>
-                <img
-                  src={topIcon}
-                  alt=""
-                  style={{ cursor: "pointer" }}
-                  onClick={handlePrev}
-                />
+                {data.length > 4 ? (
+                  <img
+                    src={topIcon}
+                    alt=""
+                    style={{ cursor: "pointer" }}
+                    onClick={handlePrev}
+                  />
+                ) : null}
               </div>
               <div className="video-right-box">
                 {displayedMembers &&
@@ -1641,12 +1716,14 @@ export default function Index({}: Props) {
                   )}
               </div>
               <div>
-                <img
-                  src={bottomIcon}
-                  alt=""
-                  style={{ cursor: "pointer" }}
-                  onClick={handleNext}
-                />
+                {data.length > 4 ? (
+                  <img
+                    src={bottomIcon}
+                    alt=""
+                    style={{ cursor: "pointer" }}
+                    onClick={handleNext}
+                  />
+                ) : null}
               </div>
             </div>
           </div>
@@ -1922,7 +1999,12 @@ export default function Index({}: Props) {
                 </Radio.Group>
               </div>
               <div className="option-right-item">
-                <Checkbox onChange={optionTalk}>开启云录制</Checkbox>
+                <Checkbox
+                  onChange={optionTalk}
+                  checked={lu}
+                >
+                  开启云录制
+                </Checkbox>
               </div>
             </div>
           </div>

@@ -1,27 +1,17 @@
-const path = require("path");
-
-const CracoLessPlugin = require("craco-less");
+/* const path = require("path");
 
 module.exports = {
-  // webpack 配置
   webpack: {
-    // 配置别名
-    alias: {
-      // 约定：使用 @ 表示 src 文件所在路径
-      "@/": path.resolve(__dirname, "src/"),
+    configure: (webpackConfig, { env, paths }) => {
+      // 修改输出目录和public path
+      paths.appBuild = path.join(path.dirname(paths.appBuild), "build");
+      webpackConfig.output = {
+        ...webpackConfig.output,
+        // 此处设置你的静态资源路径前缀
+        publicPath: process.env.NODE_ENV === "production" ? "/www/demo/" : "/",
+      };
+      return webpackConfig;
     },
   },
-  // plugins: [
-  //   {
-  //     plugin: CracoLessPlugin,
-  //     options: {
-  //       lessLoaderOptions: {
-  //         lessOptions: {
-  //           modifyVars: { '@primary-color': '#C59D60' },
-  //           javascriptEnabled: true,
-  //         },
-  //       },
-  //     },
-  //   },
-  // ],
 };
+ */

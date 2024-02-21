@@ -71,7 +71,7 @@ export default function Index({}: Props) {
             style={{ fontSize: "14px" }}
             onClick={openModle}
           >
-            我的云录刻
+            我的云录制
           </a>
         ),
       },

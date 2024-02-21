@@ -52,7 +52,11 @@ export default function Index({}: Props) {
     store.dispatch(setSheXiang(isSheXiang));
 
     if (meetId == "") {
-      message.info("请输入会议ID");
+      message.info("会议ID不能为空");
+      return;
+    }
+    if (meetName == "") {
+      message.info("用户名称不能为空");
       return;
     }
     if (isMeetingStatus !== 0) {
@@ -89,11 +93,15 @@ export default function Index({}: Props) {
   const oepnModals = () => {
     setIsMeetingStatus(0);
     let nickname = sessionStorage.getItem("nickname");
+    setMeetName(nickname);
+
     setMeetId(nickname! + "的会议");
     setIsModalOpen(true);
   };
   const JoinModals = () => {
     setIsMeetingStatus(1);
+    let nickname = sessionStorage.getItem("nickname");
+    setMeetName(nickname);
     setIsModalOpen(true);
   };
   const yuyinStatus = () => {

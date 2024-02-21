@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 import type { MenuProps } from "antd";
-import { Avatar, Dropdown, Modal } from "antd";
+import { Avatar, Dropdown, Modal, message } from "antd";
+import { useSelector } from "react-redux";
 import { UserOutlined, DownOutlined } from "@ant-design/icons";
 import logoIcon from "../../assets/common/logo.png";
 import dayuIcon from "../../assets/common/dayu.png";
@@ -13,9 +14,13 @@ interface DropdownItem {
   label: JSX.Element;
 }
 export default function Index({}: Props) {
+  const vcs = useSelector((state: any) => state.vcs.vcsClient);
+  const room = useSelector((state: any) => state.room.room); //传入的vcs
   const location = useLocation();
+  const history = useHistory();
   const [items, setItems] = useState<MenuProps["items"]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [rooma, setRooma] = useState<any>();
   const openModle = () => {
     setIsModalOpen(true);
   };
@@ -26,6 +31,7 @@ export default function Index({}: Props) {
   const handleCancel = () => {
     setIsModalOpen(false);
   };
+
   useEffect(() => {
     //初始化调用，拿到下拉菜单
     console.log(location.pathname);
@@ -50,6 +56,7 @@ export default function Index({}: Props) {
             target="_blank"
             rel="noopener noreferrer"
             style={{ fontSize: "14px", textAlign: "center" }}
+            onClick={loginOut}
           >
             退出登录
           </a>
@@ -58,6 +65,26 @@ export default function Index({}: Props) {
     ];
     setItems(dropDwonArr);
   }, []);
+  const loginOut = () => {
+    console.log(room, "我叫jas");
+    // rooms.close().finally(() => {
+    //   sessionStorage.removeItem("timer");
+    //   message.success("退出会议成功！");
+    //   history.push("/");
+    // });
+    // vcs
+    //   .logout()
+    //   .then((res: any) => {
+    //     console.log(res, "退出登录");
+    //     sessionStorage.removeItem("token");
+    //     sessionStorage.removeItem("nickname");
+    //     message.success("退出登录成功");
+    //     history.replace("/login");
+    //   })
+    //   .catch((err: any) => {
+    //     console.log(err, "退出登录报错");
+    //   });
+  };
   return (
     <div className="room-header-container">
       <div className="header-content">
@@ -83,12 +110,12 @@ export default function Index({}: Props) {
             </div>
 
             <div className="avatar-dropdown">
-              <Dropdown
+              {/* <Dropdown
                 menu={{ items }}
                 className="drop-class"
-              >
-                <DownOutlined style={{ width: "9px", height: "6px" }} />
-              </Dropdown>
+              > */}
+              <DownOutlined style={{ width: "9px", height: "6px" }} />
+              {/* </Dropdown> */}
             </div>
           </div>
         )}

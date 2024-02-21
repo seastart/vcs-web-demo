@@ -13,6 +13,7 @@ import { useSelector } from "react-redux";
 type Props = {};
 
 export default function Index({}: Props) {
+  const [form] = Form.useForm();
   const vcsa = useSelector((state: any) => state.vcs.vcsClient);
 
   const history = useHistory();
@@ -36,7 +37,7 @@ export default function Index({}: Props) {
       .register({
         name: values.username,
         password: values.password,
-        vcode: "8888",
+        vcode: values.rule,
       })
       .then((r: any) => {
         console.log(r, "res");
@@ -62,7 +63,11 @@ export default function Index({}: Props) {
         console.log(res);
       });
   };
-
+  const sendCode = () => {
+    form.setFieldsValue({
+      rule: 8888,
+    });
+  };
   const onFinishFailed = (errorInfo: any) => {
     console.log("Failed:", errorInfo);
   };
@@ -71,6 +76,12 @@ export default function Index({}: Props) {
   };
   const goLogin = () => {
     history.push("/login");
+  };
+  const handleInputChange = (e: any) => {
+    // 使用正则表达式限制用户只能输入数字
+    const value = e.target.value.replace(/\D/g, "");
+    // 使用 Form 的 setFieldsValue 方法更新值
+    form.setFieldsValue({ username: value });
   };
   return (
     <div className="register-container">
@@ -95,6 +106,7 @@ export default function Index({}: Props) {
               onFinishFailed={onFinishFailed}
               autoComplete="off"
               style={{ position: "relative" }}
+              form={form}
             >
               <Form.Item
                 name="username"
@@ -103,6 +115,7 @@ export default function Index({}: Props) {
                 <Input
                   style={{ height: "40px", paddingLeft: "25px" }}
                   placeholder="请输入您的手机号"
+                  onChange={handleInputChange} // 添加 onChange 事件处理
                 />
               </Form.Item>
               <img
@@ -123,7 +136,12 @@ export default function Index({}: Props) {
                   placeholder="请输入验证码"
                 />
               </Form.Item>
-              <Button className="btn-send">发送验证码</Button>
+              <Button
+                className="btn-send"
+                onClick={sendCode}
+              >
+                发送验证码
+              </Button>
               <Form.Item
                 name="password"
                 rules={[
