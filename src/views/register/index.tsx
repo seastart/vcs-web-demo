@@ -29,6 +29,10 @@ export default function Index({}: Props) {
     //     vcode: "8888",
     //   })
     //   .then((r) => { });
+    if (values.passwordAgain !== values.password) {
+      message.info("两次密码输入不一致");
+      return;
+    }
     if (!isChecked) {
       message.info("请阅读并同意协议");
       return;

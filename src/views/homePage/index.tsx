@@ -100,6 +100,27 @@ export default function Index({}: Props) {
   };
   const JoinModals = () => {
     setIsMeetingStatus(1);
+    if (sessionStorage.getItem("isSheXiangs")) {
+      let shexiang = sessionStorage.getItem("isSheXiangs");
+      if (shexiang == "0") {
+        console.log(111);
+        setIsSheXiang(false);
+      } else {
+        setIsSheXiang(true);
+      }
+    }
+    if (sessionStorage.getItem("isYuYinStatus")) {
+      let yuyin = sessionStorage.getItem("isYuYinStatus");
+      if (yuyin == "0") {
+        console.log(111);
+        setIsyuyin(false);
+      } else {
+        setIsyuyin(true);
+      }
+    }
+    if (sessionStorage.getItem("ids")) {
+      setMeetId(sessionStorage.getItem("ids") as any);
+    }
     let nickname = sessionStorage.getItem("nickname");
     setMeetName(nickname);
     setIsModalOpen(true);
