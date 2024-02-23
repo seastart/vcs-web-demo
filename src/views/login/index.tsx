@@ -56,6 +56,7 @@ export default function Index({}: Props) {
         //r.org         在企业里的组织
       })
       .catch((err: any) => {
+        message.info(err.message);
         console.log(err, "1");
       });
   };

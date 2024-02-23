@@ -83,7 +83,7 @@ export default function Index({}: Props) {
   };
   const handleInputChange = (e: any) => {
     // 使用正则表达式限制用户只能输入数字
-    const value = e.target.value.replace(/\D/g, "");
+    const value = e.target.value.replace(/\D/g, "").slice(0, 11);
     // 使用 Form 的 setFieldsValue 方法更新值
     form.setFieldsValue({ username: value });
   };

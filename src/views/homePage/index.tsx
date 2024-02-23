@@ -32,11 +32,14 @@ export default function Index({}: Props) {
   const [isMeetingStatus, setIsMeetingStatus] = useState(0);
   const [meetId, setMeetId] = useState("");
   const [meetName, setMeetName] = useState<any>("");
+  const [pasName, setPasName] = useState<any>("");
   useEffect(() => {
     if (sessionStorage.getItem("token")) {
     } else {
       history.replace("/login");
     }
+    //密码默认值
+    sessionStorage.setItem("password", "");
     //姓名传入
     let nickname = sessionStorage.getItem("nickname");
     setMeetName(nickname);
@@ -81,6 +84,9 @@ export default function Index({}: Props) {
         .then((res: any) => {
           console.log(res, "即时会议res");
           history.push(`/room?id=${res.data.room.no}&name=${meetName}`);
+        })
+        .catch((err: any) => {
+          message.info(err.message);
         });
     }
   };
@@ -88,6 +94,7 @@ export default function Index({}: Props) {
   const handleCancel = () => {
     setIsModalOpen(false);
     setMeetId("");
+    setPasName("");
     // setMeetName("");
   };
   const oepnModals = () => {
@@ -139,6 +146,15 @@ export default function Index({}: Props) {
   };
   const nameChange = (e: any) => {
     setMeetName(e.target.value);
+  };
+  const pasChange = (e: any) => {
+    const value = e.target.value;
+    if (/^\d*$/.test(value) && value.length <= 4) {
+      setPasName(e.target.value);
+      sessionStorage.setItem("password", value);
+    } else {
+      message.info("请输入4位数字");
+    }
   };
   return (
     <div className="home-page-container">
@@ -195,6 +211,18 @@ export default function Index({}: Props) {
             onChange={nameChange}
             value={meetName}
           />
+          {isMeetingStatus == 0 ? null : (
+            <div>
+              <div className="modal-input-title">密码</div>
+              <Input.Password
+                placeholder="请输入4位数字(非必填)"
+                className="modal-input"
+                allowClear
+                onChange={pasChange}
+                value={pasName}
+              />
+            </div>
+          )}
           <div className="modal-icon-box">
             <div className="modal-icon-name-box">
               {!isYuYin ? (

@@ -20,7 +20,12 @@ export default function Index({}: Props) {
   const history = useHistory();
   const [items, setItems] = useState<MenuProps["items"]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [data, setData] = useState([]);
   const openModle = () => {
+    vcs.listDir({ path: "/mcu" }).then((res: any) => {
+      console.log(res, "res");
+      setData(res.data.items);
+    });
     setIsModalOpen(true);
   };
   const handleOk = () => {
@@ -91,9 +96,9 @@ export default function Index({}: Props) {
     ];
     setItems(dropDwonArr);
   }, []);
-  const goVideo = () => {
-    console.log(123);
-    history.push("/videoPlay");
+  const goVideo = (item: any) => {
+    console.log(item);
+    history.push(`/videoPlay?id=${item}`);
     setIsModalOpen(false);
   };
   return (
@@ -132,34 +137,42 @@ export default function Index({}: Props) {
         )}
       </div>
       <Modal
-        title="我的云录刻"
+        title="我的云录制"
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}
-        className="headers-modal"
+        className="headera-modal"
         footer={null}
       >
-        <div className="headers-modal-content">
-          <div
-            className="headers-modal-box"
-            onClick={goVideo}
-          >
-            <div className="headers-box-left">
-              <div className="headers-left-top">某某某的个人会议室</div>
-              <div className="headers-left-bottom">
-                <span>会议ID:89653682</span>
-                <span>|</span>
-                <span>会议ID:89653682</span>
-              </div>
-            </div>
-            <div className="headers-box-right">
-              <img
-                src={dayuIcon}
-                alt=""
-              />
-            </div>
-          </div>
-        </div>
+        {data.length == 0
+          ? null
+          : data &&
+            data.length &&
+            data.map((item: any, index: number) => {
+              return (
+                <div className="headers-modal-content">
+                  <div
+                    className="headers-modal-box"
+                    onClick={() => goVideo(item)}
+                  >
+                    <div className="headers-box-left">
+                      <div className="headers-left-top">会议ID：{item}</div>
+                      {/* <div className="headers-left-bottom">
+                      <span>会议ID:89653682</span>
+                      <span>|</span>
+                      <span>会议ID:89653682</span>
+                    </div> */}
+                    </div>
+                    <div className="headers-box-right">
+                      <img
+                        src={dayuIcon}
+                        alt=""
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
       </Modal>
     </div>
   );

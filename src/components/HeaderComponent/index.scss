@@ -56,7 +56,7 @@
     color: #fff;
   }
 }
-.headers-modal {
+.headera-modal {
   .ant-modal-content {
     width: 412px;
     height: 742px;
@@ -69,12 +69,19 @@
     .ant-modal-body {
       padding: 0;
       .headers-modal-content {
+        width: 412px;
+        display: flex;
+        justify-content: space-between;
         .headers-modal-box {
+          width: 412px;
           height: 87px;
           border-bottom: 1px solid rgba(0, 0, 0, 0.1);
           display: flex;
           .headers-box-left {
             padding: 20px;
+            display: flex;
+            align-items: center;
+
             .headers-left-top {
               font-size: 14px;
               color: #333;
@@ -91,7 +98,7 @@
           .headers-box-right {
             display: flex;
             align-items: center;
-            margin-left: 93px;
+            margin-left: 200px;
           }
         }
       }
