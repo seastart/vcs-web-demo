@@ -117,6 +117,26 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             </Button>
           </div>
         </div>
+      ) : isCheck === 4 ? (
+        <div style={{ textAlign: "center" }}>
+          {checkboxLabel}
+          <div className="custom-button">
+            <Button
+              className="modal-button-btn-default"
+              type="primary"
+              onClick={handleCancel}
+            >
+              保持静音
+            </Button>
+            <Button
+              className="modal-button-btn"
+              type="primary"
+              onClick={handleOk}
+            >
+              解除静音
+            </Button>
+          </div>
+        </div>
       ) : (
         <div style={{ textAlign: "center" }}>
           {checkboxLabel}

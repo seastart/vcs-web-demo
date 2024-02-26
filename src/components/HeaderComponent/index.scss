@@ -14,8 +14,8 @@
       line-height: 64px;
       img {
         width: 242px;
-        height: 259px;
-        margin-top: -62px;
+        // height: 259px;
+        margin-top: -30px;
       }
     }
     .header-avatar-box {
@@ -90,9 +90,37 @@
             .headers-left-bottom {
               font-size: 14px;
               color: #999;
+              // margin-left: 10px;
               span {
                 margin-right: 10px;
               }
+            }
+          }
+          .headers-box-lefts {
+            padding: 20px;
+            // display: flex;
+            align-items: center;
+
+            .headers-left-top {
+              font-size: 14px;
+              color: #333;
+              font-weight: 700;
+            }
+            .headers-left-bottom {
+              font-size: 14px;
+              color: #999;
+              // margin-left: 10px;
+              span {
+                margin-right: 10px;
+              }
+            }
+          }
+          .headers-left-bottom {
+            display: block;
+            font-size: 14px;
+            color: #999;
+            span {
+              margin-right: 10px;
             }
           }
           .headers-box-right {

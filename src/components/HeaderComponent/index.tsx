@@ -21,6 +21,8 @@ export default function Index({}: Props) {
   const [items, setItems] = useState<MenuProps["items"]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [data, setData] = useState([]);
+  const [datas, setDatas] = useState([]);
+  const [lu, setLu] = useState(0);
   const openModle = () => {
     vcs.listDir({ path: "/mcu" }).then((res: any) => {
       console.log(res, "res");
@@ -34,6 +36,7 @@ export default function Index({}: Props) {
 
   const handleCancel = () => {
     setIsModalOpen(false);
+    setLu(0);
   };
   const loginOut = () => {
     console.log(vcs);
@@ -98,8 +101,21 @@ export default function Index({}: Props) {
   }, []);
   const goVideo = (item: any) => {
     console.log(item);
-    history.push(`/videoPlay?id=${item}`);
-    setIsModalOpen(false);
+    if (lu === 0) {
+      vcs.listFile({ path: `/mcu/${item}`, limit: 100 }).then((res: any) => {
+        console.log(res, "res!!");
+        setDatas(res.data.items);
+        setLu(1);
+      });
+    } else {
+      console.log(item);
+      sessionStorage.setItem("VideoUrl", item.url);
+      console.log("我是jas");
+      const newTab = window.open(`/videoPlay?id=${item.url}`, "_blank");
+      newTab?.focus();
+    }
+    // history.push(`/videoPlay?id=${item}`);
+    // setIsModalOpen(false);
   };
   return (
     <div className="header-container">
@@ -144,26 +160,62 @@ export default function Index({}: Props) {
         className="headera-modal"
         footer={null}
       >
-        {data.length == 0
+        {lu === 0
+          ? data.length == 0
+            ? null
+            : data &&
+              data.length &&
+              data.map((item: any, index: number) => {
+                return (
+                  <div className="headers-modal-content">
+                    <div
+                      className="headers-modal-box"
+                      onClick={() => goVideo(item)}
+                    >
+                      <div className="headers-box-left">
+                        <div className="headers-left-top">会议ID：{item}</div>
+                        {/* <div className="headers-left-bottom">
+                      <span>会议ID:89653682</span>
+                      <span>|</span>
+                      <span>会议ID:89653682</span>
+                    </div> */}
+                      </div>
+                      <div className="headers-box-right">
+                        <img
+                          src={dayuIcon}
+                          alt=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+          : datas.length == 0
           ? null
-          : data &&
-            data.length &&
-            data.map((item: any, index: number) => {
+          : datas &&
+            datas.length &&
+            datas.map((item: any, index: number) => {
               return (
                 <div className="headers-modal-content">
                   <div
                     className="headers-modal-box"
                     onClick={() => goVideo(item)}
                   >
-                    <div className="headers-box-left">
-                      <div className="headers-left-top">会议ID：{item}</div>
-                      {/* <div className="headers-left-bottom">
-                      <span>会议ID:89653682</span>
-                      <span>|</span>
-                      <span>会议ID:89653682</span>
-                    </div> */}
+                    <div className="headers-box-lefts">
+                      <div className="headers-left-top">{item.name}</div>
+                      <div className="headers-left-bottom">
+                        <span>
+                          {new Date(item.created_at * 1000).toLocaleString()}
+                        </span>
+                        {/* <span>|</span>
+                        <span>会议ID:89653682</span> */}
+                      </div>
                     </div>
-                    <div className="headers-box-right">
+
+                    <div
+                      className="headers-box-right"
+                      style={{ marginLeft: lu === 0 ? "215px" : "184px" }}
+                    >
                       <img
                         src={dayuIcon}
                         alt=""

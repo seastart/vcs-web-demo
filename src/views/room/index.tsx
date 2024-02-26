@@ -82,6 +82,7 @@ export default function Index({}: Props) {
   const [mirror, setMirror] = useState<any>(false);
   const [next, setNext] = useState<any>(false);
   const [prev, setPrev] = useState<any>(false);
+  const [afterShex, setAfterShex] = useState<any>(false); //进入房间推流前防止摄像头点击
 
   // constal, setVal] = useState<any>([]); //维护成员触发
   // const  [v[overId, setOverId] = useState<any>([]); //维护成员触发
@@ -303,9 +304,9 @@ export default function Index({}: Props) {
         roomsRef.current = room;
         onAfterEnterRoom(room);
         let isSheXiangs = sessionStorage.getItem("isSheXiang");
-        let isYuYins = sessionStorage.getItem("isYuYin");
+        let isYuYins = sessionStorage.getItem("isYuYinStatus");
         console.log(isYuYins, "isYuYins");
-        if (isSheXiangs == "1") {
+        if (isSheXiangs == "0") {
           setIsSheXiang(true);
           room.openVideo({}).then((s: any) => {
             //开始推流
@@ -414,6 +415,8 @@ export default function Index({}: Props) {
         onAfterEnterRoom(room);
         // sessionStorage.setItem('options',room)
         if (isSheXiangStatus) {
+          setAfterShex(true);
+
           room.openVideo({}).then((s: any) => {
             //开始推流
             setss(s);
@@ -431,6 +434,7 @@ export default function Index({}: Props) {
                 s.setMirror(true);
               }
               s.setMcuRecord();
+              setAfterShex(false);
             });
           });
         }
@@ -530,6 +534,7 @@ export default function Index({}: Props) {
               isVideo: null,
               stream: null,
               shouldBeVisible: null,
+              role: vcsMember.options.account.role,
             }
           : member
       )
@@ -659,7 +664,6 @@ export default function Index({}: Props) {
       const shouldHaveStream = member.members.options.account.video_state === 0;
       console.log(existingStream, shouldHaveStream, "existingStream");
       if (existingStream === undefined && shouldHaveStream) {
-        console.log(member, "111打开");
         activeStreams.set(member.id, null);
         try {
           if (!member.stream || member.stream.domItems.length == 0) {
@@ -693,8 +697,6 @@ export default function Index({}: Props) {
           activeStreams.delete(member.id);
         }
       } else if (existingStream && !shouldHaveStream) {
-        console.log("111关闭");
-
         activeStreams.delete(member.id);
         // await existingStream.close();
 
@@ -799,11 +801,14 @@ export default function Index({}: Props) {
         }
       }
     } else if (args.type == 1) {
+      console.log(currentRooms.getRoom().sharing_type, "sharing_type");
       setIsVideoVisible(false);
       setIsClose(true); // 更新状态以关闭面板
       setIsZhanKai(true); // 更新状态以折叠视频面板
       setIsSheXiang(false);
       setWhite(true);
+      setIsOptions(false);
+
       if (args.accId === currentRooms.options.account.id) {
         setIsGongXiang(false);
         setIsMine(true);
@@ -846,7 +851,8 @@ export default function Index({}: Props) {
       // 如果prevData不是数组或为空，则直接返回原状态
       return prevData;
     });
-    if (acc.audio_state !== null) {
+    if (acc.account.hasOwnProperty("audio_state")) {
+      // isYuYinStatus session里面1是开启 0是关闭
       if (
         acc.account.audio_state == 0 &&
         sessionStorage.getItem("isYuYinStatus") == "0"
@@ -857,16 +863,31 @@ export default function Index({}: Props) {
         acc.account.audio_state == 1 &&
         sessionStorage.getItem("isYuYinStatus") == "1"
       ) {
+        message.info("主持人开启了全体静音");
         sessionStorage.setItem("isYuYinStatus", "0");
         sessionStorage.setItem("isYuYin", "0");
         aaRef.current.close();
         roomsRef.current.updateAccount({ audio_state: 1 }, true);
         setAudioVis(false);
         setIsYuYin(false);
+      } else if (
+        acc.account.audio_state == 1 &&
+        sessionStorage.getItem("isYuYinStatus") == "0"
+      ) {
+        message.info("主持人开启了全体静音");
       }
     }
-    if (acc.account.role !== 0) {
-      console.log("主持人");
+    if (acc.account.hasOwnProperty("role")) {
+      console.log(acc.account.hasOwnProperty("role"), "主持人");
+      if (acc.account.role === 4) {
+        message.info("您已被设置为联席主持人");
+      }
+      if (acc.account.role === 2) {
+        message.info("您已被设置为主持人");
+      }
+      if (acc.account.role === 0) {
+        message.info("您已被设置为普通成员");
+      }
       setData((prevData: any) => {
         // 确保prevData是一个数组且至少有一个元素
         if (Array.isArray(prevData) && prevData.length > 0) {
@@ -943,15 +964,16 @@ export default function Index({}: Props) {
   };
   //点击小窗口
   const rightBoxClick = (item: any) => {
+    setThrStatus(true);
+    if (thrStatus) {
+      message.info("请不要频繁切换小窗口");
+      return;
+    }
     if (selectedId == item.id) {
       setThrStatus(false);
       return;
     }
-    setThrStatus(true);
-    if (thrStatus) {
-      message.info("请不要过快点击");
-      return;
-    }
+
     console.log(item, "点我！");
     setSelectedId(item.id); // 更新选中的盒子 id
     setSelectedData(item);
@@ -1016,7 +1038,6 @@ export default function Index({}: Props) {
       setIsVideoVisible(true);
     } else if (item.id !== data[0].id && item.video_state == 0) {
       // ss?.removePlay("videoDom", true);
-      setThrStatus(false);
       console.log("我是其他人,且开启了摄像头！");
       setVideoSmallStatus(2);
       setIsVideoVisible(false);
@@ -1033,6 +1054,7 @@ export default function Index({}: Props) {
           //这里我们得到了关于视频的VCSStream对象，同样也不需要调用connect，s对象需要自己保存
           item.stream = s;
           s.addPlay("videoDom");
+          setThrStatus(false);
         });
     } else if (item.id == data[0].id && item.video_state !== 0) {
       setThrStatus(false);
@@ -1163,6 +1185,10 @@ export default function Index({}: Props) {
   };
   const yuyinChange = (e: RadioChangeEvent) => {
     console.log("radio checked", e.target.value);
+    console.log(
+      rooms.getRoom().relieve_astate,
+      "rooms.getRoom().relieve_astate"
+    );
     if (data[0].role == 0 && rooms.getRoom().relieve_astate == 1) {
       message.info("主持人设置了全体静音，您暂无权限打开麦克风");
       return;
@@ -1192,7 +1218,11 @@ export default function Index({}: Props) {
       // message.info("请不要过快切换麦克风");
       return;
     }
-    console.log(rooms.getRoom().relieve_astate, data, "room");
+    console.log(
+      rooms.getRoom().relieve_astate,
+      data,
+      "rooms.getRoom().relieve_astate"
+    );
     if (data[0].role === 0 && rooms.getRoom().relieve_astate === 1) {
       message.info("主持人设置了全体静音，您暂无权限打开麦克风");
       return;
@@ -1225,12 +1255,19 @@ export default function Index({}: Props) {
   };
   //点击摄像头的状态
   const shipinStatus = () => {
+    //在切换摄像头推流的过程中禁止关闭摄像头
+    if (changeSheXiang) {
+      return;
+    }
     if (!isGongXiang) {
       message.info("正在共享中，暂停使用视频");
       return;
     }
+    if (afterShex) {
+      return;
+    }
     if (videoVis) {
-      message.info("请不要过快切换摄像头");
+      message.info("请不要频繁切换摄像头");
       return;
     }
 
@@ -1313,7 +1350,7 @@ export default function Index({}: Props) {
   const allUnMutes = () => {
     setModalTitle("提示");
     setIsCheck(4);
-    setCheckboxLabel("主持人请求打开你的麦克风");
+    setCheckboxLabel("主持人请求解除您的静音");
     setIsDialogVisible(true);
   };
   //结束会议
@@ -1521,7 +1558,6 @@ export default function Index({}: Props) {
   //共享电子白板
   const openModleWhite = () => {
     console.log("共享电子白板");
-    setIsOptions(false);
     rooms.requestForSharing({
       st: 1,
     });
@@ -2106,7 +2142,11 @@ export default function Index({}: Props) {
                             {index == 0 ? " (我自己)" : ""}
                           </div>
                           <div style={{ textAlign: "left" }}>
-                            {item.role !== 0 && item.role ? "(主持人)" : ""}
+                            {item.role && item.role == 4
+                              ? "(联席主持人)"
+                              : item.role && item.role !== 0
+                              ? "(主持人)"
+                              : ""}
                           </div>
                         </div>
                         {/* <div className="name-bottom">12</div> */}

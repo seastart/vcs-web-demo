@@ -12,12 +12,6 @@ export default function Index({}: Props) {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const id = queryParams.get("id");
-  console.log(id, "qieryParams");
-  useEffect(() => {
-    vcs.listFile({ path: `/mcu/${id}`, limit: 100 }).then((res: any) => {
-      console.log(res, "res!!");
-    });
-  }, []);
   return (
     <div className="video-play-container">
       <HeaderComponent />
@@ -26,7 +20,11 @@ export default function Index({}: Props) {
           <div className="text-top">个人会议室</div>
           <div className="text-bottom">会议ID：{id}</div>
         </div>
-        <video className="play"></video>
+        <video
+          className="play"
+          controls
+          src={id ? id : ""}
+        ></video>
       </div>
     </div>
   );

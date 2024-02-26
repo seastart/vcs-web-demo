@@ -33,6 +33,10 @@ export default function Index({}: Props) {
       message.info("两次密码输入不一致");
       return;
     }
+    if (values.username.length !== 11) {
+      message.info("请输入11位手机号");
+      return;
+    }
     if (!isChecked) {
       message.info("请阅读并同意协议");
       return;
@@ -85,6 +89,7 @@ export default function Index({}: Props) {
     // 使用正则表达式限制用户只能输入数字
     const value = e.target.value.replace(/\D/g, "").slice(0, 11);
     // 使用 Form 的 setFieldsValue 方法更新值
+    console.log(value);
     form.setFieldsValue({ username: value });
   };
   return (
