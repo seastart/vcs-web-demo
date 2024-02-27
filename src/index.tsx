@@ -9,7 +9,7 @@ const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
-  <Router basename="/www/demo">
+  <Router basename="demo">
     <App />
   </Router>
 );

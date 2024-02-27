@@ -100,18 +100,24 @@ export default function Index({}: Props) {
     setItems(dropDwonArr);
   }, []);
   const goVideo = (item: any) => {
-    console.log(item);
     if (lu === 0) {
       vcs.listFile({ path: `/mcu/${item}`, limit: 100 }).then((res: any) => {
         console.log(res, "res!!");
         setDatas(res.data.items);
         setLu(1);
+        console.log(item, "items");
+        localStorage.setItem("playId", item);
       });
     } else {
       console.log(item);
       sessionStorage.setItem("VideoUrl", item.url);
       console.log("我是jas");
-      const newTab = window.open(`/videoPlay?id=${item.url}`, "_blank");
+      const newTab = window.open(
+        `${window.location.origin}/demo/videoPlay?id=${encodeURIComponent(
+          item.url
+        )}`,
+        "_blank"
+      );
       newTab?.focus();
     }
     // history.push(`/videoPlay?id=${item}`);

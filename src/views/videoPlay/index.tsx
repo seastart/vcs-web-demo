@@ -12,13 +12,19 @@ export default function Index({}: Props) {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const id = queryParams.get("id");
+  const playId = localStorage.getItem("playId");
+  const playIdString = playId ? playId : "";
+
   return (
     <div className="video-play-container">
       <HeaderComponent />
       <div className="play-content">
         <div className="play-top">
           <div className="text-top">个人会议室</div>
-          <div className="text-bottom">会议ID：{id}</div>
+          <div className="text-bottom">
+            会议ID：
+            {playIdString}
+          </div>
         </div>
         <video
           className="play"
