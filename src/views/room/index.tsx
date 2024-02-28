@@ -44,6 +44,7 @@ import {
   Checkbox,
 } from "antd";
 import "./index.scss";
+import { debug } from "console";
 type Props = {};
 
 export default function Index({}: Props) {
@@ -94,6 +95,9 @@ export default function Index({}: Props) {
   const MAX_DISPLAY_EXCEPT_FIRST = 3; // 定义最大显示数量，减去始终显示的第一个成员
   const [selectedId, setSelectedId] = useState<any>(null); //选中小窗口的唯一标识
   const [selectedData, setSelectedData] = useState<any>([]); //选中小窗口的数组，大窗口的展示
+  const selectedIdRef = useRef<any>(selectedId);
+  const selectedDataRef = useRef<any>(selectedId);
+
   const [audioinput, setAudioinput] = useState<any>([]); //枚举音频
   const [videoinput, setVideoinput] = useState<any>([]); //枚举视频
   const [thrStatus, setThrStatus] = useState<any>(false); //小窗口点击节流
@@ -122,8 +126,8 @@ export default function Index({}: Props) {
   const [activeStreams, setActiveStreams] = useState<any>(new Map());
   const [isModalOpen, setIsModalOpen] = useState(false); //设置弹窗开启
   const [streams, setStreams] = useState(new Map());
+  const [chabaShexiangStatus, setChabaShexiangStatus] = useState(false); //插拔摄像头后禁止点击别人小窗口
   const iframeRef = useRef(null); //获取canvas
-
   let ids = JSON.parse(sessionStorage.getItem("options") || "{}");
   let userId = sessionStorage.getItem("accid");
   let changeDev = false;
@@ -211,6 +215,8 @@ export default function Index({}: Props) {
     // setData([mine]);
     setSelectedId(mine.id); // 设置选中成员的 ID
     setSelectedData(mine);
+    selectedIdRef.current = mine.id;
+    selectedDataRef.current = mine;
   }, [nickname, rooms]); // 依赖项是nickname
   //组件的销毁
   useEffect(() => {
@@ -239,6 +245,7 @@ export default function Index({}: Props) {
   //浏览器回退后退出登录
   useEffect(() => {
     // 监听历史对象的变化
+    console.log("我回退了");
     let roomsa = rooms;
     console.log(roomsa, "rooms,退出");
     const unlisten = history.listen((location: any, action) => {
@@ -246,6 +253,7 @@ export default function Index({}: Props) {
       console.log(location, "rooms,退出1");
       if (action === "POP") {
         // 执行你想要的操作，例如退出会议
+        console.log(rooms);
         if (rooms) {
           // 如果 rooms 对象存在，则调用退出会议的方法
           if (id) {
@@ -287,6 +295,7 @@ export default function Index({}: Props) {
       //   sessionStorage.setItem("valueAudio", audioOutputDevices[0].id); //存储枚举视频设备id
       //   console.log(audioOutputDevices);
       // });
+      setChabaShexiangStatus(true);
       setTimeout(() => {
         vcs.enumDevices().then(async (res: any) => {
           console.log(res, "枚举设备");
@@ -306,20 +315,27 @@ export default function Index({}: Props) {
             roomsRef.current.updateAccount({ video_state: 1 }, true);
 
             await ssRef.current.removePlay("videoDom", true);
-            console.log(data[0], "1111111");
+            console.log(displayedMembersRef.current[0], "1111111");
             await ssRef.current.removePlay(
               `video-right-time-${sessionStorage.getItem("accid")}`,
               true
             );
             console.log(videoOutputDevices[0], "我改变了");
             setValueTwo(videoOutputDevices[0].id);
+            //存储selectedData为自己
+
+            setSelectedId(displayedMembersRef.current[0].id); // 更新选中的盒子 id
+
+            setSelectedData(displayedMembersRef.current[0]);
             sessionStorage.setItem("valueTwo", videoOutputDevices[0].id); //存储枚举视频设备id
             roomsRef.current
               .openVideo({ deviceId: videoOutputDevices[0].id })
               .then((s: any) => {
+                setss(s);
+                ssRef.current = s;
+
                 //开始推流
                 s.connect().then(() => {
-                  ssRef.current = s;
                   s.setMcuRecord();
                   //  setIsVideoVisible(false);
                   //  setSelectedId(displayedMembers[0].id); // 更新选中的盒子 id
@@ -332,11 +348,15 @@ export default function Index({}: Props) {
                   s.addPlay(
                     `video-right-time-${sessionStorage.getItem("accid")}`
                   ); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
+
                   if (mirror) {
                     s.setMirror(true);
                   }
+                  setChabaShexiangStatus(false); //推流成功后允许点击小窗口
                 });
               });
+          } else {
+            setChabaShexiangStatus(false); //推流成功后允许点击小窗口
           }
           if (!isAudioContained) {
             roomsRef.current.updateAccount({ audio_state: 1 }, true);
@@ -352,8 +372,11 @@ export default function Index({}: Props) {
                 a.connect().then(() => {
                   roomsRef.current.updateAccount({ audio_state: 0 }, true);
                   // a.play();
+                  setChabaShexiangStatus(false); //推流成功后允许点击小窗口
                 });
               });
+          } else {
+            setChabaShexiangStatus(false); //推流成功后允许点击小窗口
           }
           // console.log(isIdContained, "isIdContained");
 
@@ -609,6 +632,10 @@ export default function Index({}: Props) {
   };
 
   //监听事件
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
+
   // 成员进入
   const onMemberIn = (vcsMember: any) => {
     console.log(roomsRef.current, "成员进入");
@@ -691,12 +718,25 @@ export default function Index({}: Props) {
     // setOverId(vcsMember.options.account.id);
     let memberId = vcsMember.options.account.id;
     console.log(data, "data");
+
     // 更新成员列表，移除离开的成员
     setData((prevMembers: any) => {
       // 首先确保prevMembers是一个数组
       const array = Array.isArray(prevMembers) ? prevMembers : [];
       return array.filter((member) => member.id !== memberId);
     });
+    if (vcsMember.options.account.id === selectedIdRef.current) {
+      // rightBoxClick(displayedMembersRef.current[0]);
+      setSelectedId(displayedMembersRef.current[0].id); // 更新选中的盒子 id
+      setSelectedData(displayedMembersRef.current[0]);
+      if (sessionStorage.getItem("isSheXiangs") === "1") {
+        ssRef.current.addPlay("videoDom");
+      } else {
+        setIsVideoVisible(true);
+      }
+      // selectedIdRef.current = displayedMembersRef.current[0].id;
+      // selectedDataRef.current = displayedMembersRef.current[0];
+    }
   };
   const onRoomUpdate = (room: any) => {
     console.log(room, "11111qqqrrr");
@@ -706,9 +746,9 @@ export default function Index({}: Props) {
     } else {
       console.log(room, "122211");
       setLu(true);
-      if (room.sharing_type === 1) {
-        setWhite(true);
-      }
+      // if (room.sharing_type === 1) {
+      //   // setWhite(true);
+      // }
       //开启了，
       //如果正在共享电子白板，开启白板推流
     }
@@ -816,6 +856,7 @@ export default function Index({}: Props) {
               setIsVideoVisible(false);
               s.addPlay("videoDom");
               setSelectedData(member);
+              selectedDataRef.current = member;
             }
             s.setMcuRecord();
           } else {
@@ -860,7 +901,7 @@ export default function Index({}: Props) {
     setDisplayedMembers(displayedMembers);
     displayedMembersRef.current = displayedMembers;
   }, [displayIndex, data, isSheXiang, isYuYin, getDisplayedMembers]);
-  const onShare = (args: any) => {
+  const onShare = async (args: any) => {
     console.log(args, "onShare");
     //因为闭包的原因 数据拿不到，存到ref中
     const currentRooms = roomsRef.current;
@@ -872,11 +913,11 @@ export default function Index({}: Props) {
     console.log(currentGx, "currentGx");
     console.log(currentRooms, "currentRooms");
     if (currentss) {
-      console.log(currentRooms, "currentss");
+      console.log(currentss, "currentss");
       currentRooms.updateAccount({ video_state: 1 }, true);
-      currentss.removePlay("videoDom", true);
+      await currentss.removePlay("videoDom", true);
       console.log(displayedMembersCurrent, "displayedMembersCurrent");
-      currentss.removePlay(
+      await currentss.removePlay(
         "video-right-time-" + currentRooms.options.account.id,
         true
       );
@@ -1078,6 +1119,8 @@ export default function Index({}: Props) {
     }
     // 确保不会超出数据范围，并且留下至少一个成员来显示
     setNext(true);
+    console.log(displayIndex + MAX_DISPLAY_EXCEPT_FIRST);
+    console.log(data, "datas");
     if (displayIndex + MAX_DISPLAY_EXCEPT_FIRST < data.length - 1) {
       closeAllActiveStreams(displayedMembers);
       setDisplayIndex(displayIndex + MAX_DISPLAY_EXCEPT_FIRST);
@@ -1095,6 +1138,7 @@ export default function Index({}: Props) {
     }
     setPrev(true);
     // 确保索引不会小于0
+    console.log(Math.max(displayIndex - MAX_DISPLAY_EXCEPT_FIRST, 0));
     if (displayIndex > 0) {
       closeAllActiveStreams(displayedMembers);
       setDisplayIndex(Math.max(displayIndex - MAX_DISPLAY_EXCEPT_FIRST, 0));
@@ -1105,22 +1149,34 @@ export default function Index({}: Props) {
   };
   //点击小窗口
   const rightBoxClick = (item: any) => {
+    if (chabaShexiangStatus) {
+      return;
+    }
     setThrStatus(true);
     if (thrStatus) {
       message.info("请不要频繁切换小窗口");
       return;
     }
+    //防止重复点击
     if (selectedId == item.id) {
       setThrStatus(false);
       return;
     }
 
     console.log(item, "点我！");
+    console.log(item.id, data, ss, "ahahahhahahahwwwaaa666");
+
     setSelectedId(item.id); // 更新选中的盒子 id
+
     setSelectedData(item);
+    selectedIdRef.current = item.id;
+    selectedDataRef.current = item;
     setIsVideoVisible(false);
+    // console.log(selectedData, "selectedData");
+    // console.log(data, "data[0]");
+    // console.log(ss, "data-ss");
     if (
-      item.id === data[0].id &&
+      item.id === data[0]?.id &&
       ss &&
       Object.keys(ss).length !== 0 &&
       item.video_state == 0
@@ -1130,9 +1186,12 @@ export default function Index({}: Props) {
       setIsVideoVisible(false);
       setVideoSmallStatus(0);
     } else {
-      console.log(item, "item");
+      console.log(isSheXiang, "item-shexiang");
+      console.log(ss, "item-ss");
       selectedData.stream?.removePlay("videoDom", true);
-      if (isSheXiang && ss) {
+      if (isSheXiang && Object.keys(ss).length !== 0) {
+        console.log("hahaha");
+        // ssRef.current.removePlay("videoDom", true);
         ss.removePlay("videoDom", true);
 
         console.log(selectedData, "isSheXiang");
@@ -1287,6 +1346,8 @@ export default function Index({}: Props) {
       setChangeSheXiang(true);
       setSelectedId(displayedMembers[0].id); // 更新选中的盒子 id
       setSelectedData(displayedMembers[0]);
+      selectedIdRef.current = displayedMembers[0].id;
+      selectedDataRef.current = displayedMembers[0];
       if (ss) {
         await ss.removePlay("videoDom", true);
         await ss.removePlay(`video-right-time-${data[0].id}`, true);
@@ -1394,7 +1455,14 @@ export default function Index({}: Props) {
   };
   //点击摄像头的状态
   const shipinStatus = () => {
+    if (chabaShexiangStatus) {
+      //插拔摄像头后没有推流成功时禁止开启或者关闭摄像头
+      return;
+    }
     //在切换摄像头推流的过程中禁止关闭摄像头
+    if (data.length == 0) {
+      return;
+    }
     if (changeSheXiang) {
       return;
     }
@@ -1456,6 +1524,8 @@ export default function Index({}: Props) {
           setIsVideoVisible(false);
           setSelectedId(displayedMembers[0].id); // 更新选中的盒子 id
           setSelectedData(displayedMembers[0]);
+          selectedIdRef.current = displayedMembers[0].id;
+          selectedDataRef.current = displayedMembers[0];
           console.log(displayedMembers, "displayedMembers");
 
           // s.removePlay("videoDom", true);
@@ -2042,7 +2112,7 @@ export default function Index({}: Props) {
               )}
 
               <div>
-                {data.length > 4 && displayIndex > 0 ? (
+                {displayIndex > 0 ? (
                   <img
                     src={topIcon}
                     alt=""
