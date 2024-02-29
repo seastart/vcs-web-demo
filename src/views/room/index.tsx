@@ -312,69 +312,81 @@ export default function Index({}: Props) {
             device.id.includes(sessionStorage.getItem("valueAudio"))
           );
           if (!isIdContained) {
-            roomsRef.current.updateAccount({ video_state: 1 }, true);
-
-            await ssRef.current.removePlay("videoDom", true);
-            console.log(displayedMembersRef.current[0], "1111111");
-            await ssRef.current.removePlay(
-              `video-right-time-${sessionStorage.getItem("accid")}`,
-              true
-            );
-            console.log(videoOutputDevices[0], "我改变了");
             setValueTwo(videoOutputDevices[0].id);
-            //存储selectedData为自己
-
-            setSelectedId(displayedMembersRef.current[0].id); // 更新选中的盒子 id
-
-            setSelectedData(displayedMembersRef.current[0]);
             sessionStorage.setItem("valueTwo", videoOutputDevices[0].id); //存储枚举视频设备id
-            roomsRef.current
-              .openVideo({ deviceId: videoOutputDevices[0].id })
-              .then((s: any) => {
-                setss(s);
-                ssRef.current = s;
+            //如果此时摄像头状态为打开，则更换设备并推流
+            if (sessionStorage.getItem("isSheXiang") === "1") {
+              roomsRef.current.updateAccount({ video_state: 1 }, true);
+              await ssRef.current.removePlay("videoDom", true);
+              console.log(displayedMembersRef.current[0], "1111111");
+              await ssRef.current.removePlay(
+                `video-right-time-${sessionStorage.getItem("accid")}`,
+                true
+              );
+              console.log(videoOutputDevices[0], "我改变了");
+              //存储selectedData为自己
 
-                //开始推流
-                s.connect().then(() => {
-                  s.setMcuRecord();
-                  //  setIsVideoVisible(false);
-                  //  setSelectedId(displayedMembers[0].id); // 更新选中的盒子 id
-                  //  setSelectedData(displayedMembers[0]);
+              setSelectedId(displayedMembersRef.current[0].id); // 更新选中的盒子 id
 
-                  // s.removePlay("videoDom", true);
-                  roomsRef.current.updateAccount({ video_state: 0 }, true);
+              setSelectedData(displayedMembersRef.current[0]);
+              roomsRef.current
+                .openVideo({ deviceId: videoOutputDevices[0].id })
+                .then((s: any) => {
+                  setss(s);
+                  ssRef.current = s;
 
-                  s.addPlay("videoDom"); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
-                  s.addPlay(
-                    `video-right-time-${sessionStorage.getItem("accid")}`
-                  ); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
+                  //开始推流
+                  s.connect().then(() => {
+                    s.setMcuRecord();
+                    //  setIsVideoVisible(false);
+                    //  setSelectedId(displayedMembers[0].id); // 更新选中的盒子 id
+                    //  setSelectedData(displayedMembers[0]);
 
-                  if (mirror) {
-                    s.setMirror(true);
-                  }
-                  setChabaShexiangStatus(false); //推流成功后允许点击小窗口
+                    // s.removePlay("videoDom", true);
+                    roomsRef.current.updateAccount({ video_state: 0 }, true);
+
+                    s.addPlay("videoDom"); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
+                    s.addPlay(
+                      `video-right-time-${sessionStorage.getItem("accid")}`
+                    ); //调用 play开始播放，dom为一个div元素或者元素的id，sdk内部会在div里创建并管理video标签
+
+                    if (mirror) {
+                      s.setMirror(true);
+                    }
+                    setChabaShexiangStatus(false); //推流成功后允许点击小窗口
+                  });
+                })
+                .catch((err: any) => {
+                  message.error("该设备正在占用，请重新打开摄像头或更换设备");
                 });
-              });
+            }
           } else {
             setChabaShexiangStatus(false); //推流成功后允许点击小窗口
           }
           if (!isAudioContained) {
-            roomsRef.current.updateAccount({ audio_state: 1 }, true);
-            aaRef.current.close();
             setValue(audioOutputDevices[0].id);
             sessionStorage.setItem("valueAudio", audioOutputDevices[0].id); //存储枚举视频设备id
-            roomsRef.current
-              .openAudio({ deviceId: audioOutputDevices[0].id })
-              .then((a: any) => {
-                //开始推流
-                aaRef.current = a;
+            //如果此时麦克风状态为打开，则更换设备并推流
+            if (sessionStorage.getItem("isYuYin") === "1") {
+              roomsRef.current.updateAccount({ audio_state: 1 }, true);
+              aaRef.current.close();
 
-                a.connect().then(() => {
-                  roomsRef.current.updateAccount({ audio_state: 0 }, true);
-                  // a.play();
-                  setChabaShexiangStatus(false); //推流成功后允许点击小窗口
+              roomsRef.current
+                .openAudio({ deviceId: audioOutputDevices[0].id })
+                .then((a: any) => {
+                  //开始推流
+                  aaRef.current = a;
+
+                  a.connect().then(() => {
+                    roomsRef.current.updateAccount({ audio_state: 0 }, true);
+                    // a.play();
+                    setChabaShexiangStatus(false); //推流成功后允许点击小窗口
+                  });
+                })
+                .catch((err: any) => {
+                  message.error("该设备正在占用，请重新打开麦克风或更换设备");
                 });
-              });
+            }
           } else {
             setChabaShexiangStatus(false); //推流成功后允许点击小窗口
           }
@@ -494,10 +506,13 @@ export default function Index({}: Props) {
     let audioOutputDevices = res.filter(
       (res: any) => res.kind === "audioinput"
     );
+    if (audioOutputDevices.length) {
+      setAudioinput(audioOutputDevices);
+      sessionStorage.setItem("valueAudio", audioOutputDevices[0].id); //存储枚举视频设备id
+      setValue(audioOutputDevices[0].id);
 
-    setAudioinput(audioOutputDevices);
-    sessionStorage.setItem("valueAudio", audioOutputDevices[0].id); //存储枚举视频设备id
-    console.log(audioOutputDevices);
+      console.log(audioOutputDevices);
+    }
 
     //每次进入房间后初始化加载一遍摄像头设备
     let videodevices = await vcs.enumDevices();
@@ -505,20 +520,22 @@ export default function Index({}: Props) {
     let videoOutputDevices = videodevices.filter(
       (videodevices: any) => videodevices.kind === "videoinput"
     );
+    if (videoOutputDevices.length) {
+      setValueTwo(videoOutputDevices[0].id);
+      sessionStorage.setItem("valueTwo", videoOutputDevices[0].id); //存储枚举视频设备id
+      setVideoinput(videoOutputDevices);
+      videoDevice = videoOutputDevices[0].id;
+    }
     //每次进入房间加载第一个默认设备
-    setValueTwo(videoOutputDevices[0].id);
-    sessionStorage.setItem("valueTwo", videoOutputDevices[0].id); //存储枚举视频设备id
-    setVideoinput(videoOutputDevices);
-    videoDevice = videoOutputDevices[0].id;
+
     // console.log("进入！！！！");
     // let videoDevice: any;
+
     // //初始化加载一遍麦克风设备
-    let audiodevices = await vcs.enumDevices();
-    console.log(audiodevices, "枚举麦克风");
-    setAudioinput(audioOutputDevices);
-    setValue(audioOutputDevices[0].id);
-    sessionStorage.setItem("valueAudio", audioOutputDevices[0].id); //存储枚举视频设备id
-    console.log(audioOutputDevices);
+    // let audiodevices = await vcs.enumDevices();
+    // setAudioinput(audioOutputDevices);
+    // setValue(audioOutputDevices[0].id);
+    // sessionStorage.setItem("valueAudio", audioOutputDevices[0].id); //存储枚举视频设备id
     // //每次进入房间后初始化加载一遍摄像头设备
     // vcs.enumDevices().then((res: any) => {
     //   console.log(res, "枚举设备");
@@ -549,18 +566,22 @@ export default function Index({}: Props) {
           (isYuyin && room.getRoom().relieve_astate !== 1) ||
           room.getRoom().relieve_astate !== 0
         ) {
-          sessionStorage.setItem("isYuYin", "1");
+          if (audioOutputDevices.length) {
+            sessionStorage.setItem("isYuYin", "1");
 
-          room.openAudio({}).then((a: any) => {
-            //开始推流
-            setaa(a);
-            aaRef.current = a;
+            room.openAudio({}).then((a: any) => {
+              //开始推流
+              setaa(a);
+              aaRef.current = a;
 
-            a.connect().then(() => {
-              room.updateAccount({ audio_state: 0 }, true);
-              // a.play();
+              a.connect().then(() => {
+                room.updateAccount({ audio_state: 0 }, true);
+                // a.play();
+              });
             });
-          });
+          } else {
+            setIsYuYin(false);
+          }
         } else {
           // message.info("主持人设置了全体静音");
           setIsYuYin(false);
@@ -571,29 +592,33 @@ export default function Index({}: Props) {
         onAfterEnterRoom(room);
         sessionStorage.setItem("options", JSON.stringify(room.options));
         if (isSheXiangStatus) {
-          setAfterShex(true);
-          sessionStorage.setItem("isSheXiang", "1");
-          console.log(videoDevice, "videoDevice!");
-          room.openVideo({ deviceId: videoDevice }).then((s: any) => {
-            //开始推流
-            setss(s);
-            ssRef.current = s;
+          if (videoOutputDevices.length) {
+            setAfterShex(true);
+            sessionStorage.setItem("isSheXiang", "1");
+            console.log(videoDevice, "videoDevice!");
+            room.openVideo({ deviceId: videoDevice }).then((s: any) => {
+              //开始推流
+              setss(s);
+              ssRef.current = s;
 
-            s.connect().then(() => {
-              room.updateAccount({ video_state: 0 }, true);
-              setIsVideoVisible(false);
-              s.addPlay("videoDom");
-              console.log(room.options.account.id, "rooms");
-              console.log("我有值了！");
-              // setTimeout(() => {
-              s.addPlay(`video-right-time-${room.options.account.id}`);
-              if (mirror) {
-                s.setMirror(true);
-              }
-              s.setMcuRecord();
-              setAfterShex(false);
+              s.connect().then(() => {
+                room.updateAccount({ video_state: 0 }, true);
+                setIsVideoVisible(false);
+                s.addPlay("videoDom");
+                console.log(room.options.account.id, "rooms");
+                console.log("我有值了！");
+                // setTimeout(() => {
+                s.addPlay(`video-right-time-${room.options.account.id}`);
+                if (mirror) {
+                  s.setMirror(true);
+                }
+                s.setMcuRecord();
+                setAfterShex(false);
+              });
             });
-          });
+          } else {
+            setIsSheXiang(false);
+          }
         } else {
           sessionStorage.setItem("isSheXiang", "0");
         }
@@ -705,6 +730,9 @@ export default function Index({}: Props) {
   };
   const onMemberOut = (vcsMember: any) => {
     console.log(vcsMember, "成员离开");
+    console.log(activeStreams, "activeStreams");
+    activeStreams.delete(vcsMember.options.account.id);
+    setActiveStreams(activeStreams);
     // console.log(data, "data");
     // let newDataArr = data.filter(
     //   (item: any) => item.id !== vcsMember.options.account.id
@@ -731,6 +759,7 @@ export default function Index({}: Props) {
       setSelectedData(displayedMembersRef.current[0]);
       if (sessionStorage.getItem("isSheXiangs") === "1") {
         ssRef.current.addPlay("videoDom");
+        setIsVideoVisible(false);
       } else {
         setIsVideoVisible(true);
       }
