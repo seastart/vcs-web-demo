@@ -33,7 +33,23 @@ export default function Index({}: Props) {
   const [meetId, setMeetId] = useState("");
   const [meetName, setMeetName] = useState<any>("");
   const [pasName, setPasName] = useState<any>("");
+  let meetingStatus = "1";
   useEffect(() => {
+    //初始值记住加入会议状态
+    if (!sessionStorage.getItem("joinYuyin")) {
+      sessionStorage.setItem("joinYuyin", "1");
+    }
+    if (!sessionStorage.getItem("openYuyin")) {
+      sessionStorage.setItem("openYuyin", "1");
+    }
+
+    if (!sessionStorage.getItem("joinShexiang")) {
+      sessionStorage.setItem("joinShexiang", "0");
+    }
+    if (!sessionStorage.getItem("openShexiang")) {
+      sessionStorage.setItem("openShexiang", "0");
+    }
+
     if (sessionStorage.getItem("token")) {
     } else {
       history.replace("/login");
@@ -99,6 +115,18 @@ export default function Index({}: Props) {
   };
   const oepnModals = () => {
     setIsMeetingStatus(0);
+    meetingStatus = "0";
+    if (sessionStorage.getItem("openYuyin") === "1") {
+      setIsyuyin(true);
+    } else {
+      setIsyuyin(false);
+    }
+    if (sessionStorage.getItem("openShexiang") === "1") {
+      setIsSheXiang(true);
+    } else {
+      setIsSheXiang(false);
+    }
+
     let nickname = sessionStorage.getItem("nickname");
     setMeetName(nickname);
 
@@ -107,24 +135,35 @@ export default function Index({}: Props) {
   };
   const JoinModals = () => {
     setIsMeetingStatus(1);
-    if (sessionStorage.getItem("isSheXiangs")) {
-      let shexiang = sessionStorage.getItem("isSheXiangs");
-      if (shexiang == "0") {
-        console.log(111);
-        setIsSheXiang(false);
-      } else {
-        setIsSheXiang(true);
-      }
+    meetingStatus = "1";
+    if (sessionStorage.getItem("joinYuyin") === "1") {
+      setIsyuyin(true);
+    } else {
+      setIsyuyin(false);
     }
-    if (sessionStorage.getItem("isYuYinStatus")) {
-      let yuyin = sessionStorage.getItem("isYuYinStatus");
-      if (yuyin == "0") {
-        console.log(111);
-        setIsyuyin(false);
-      } else {
-        setIsyuyin(true);
-      }
+    if (sessionStorage.getItem("joinShexiang") === "1") {
+      setIsSheXiang(true);
+    } else {
+      setIsSheXiang(false);
     }
+    // if (sessionStorage.getItem("isSheXiangs")) {
+    //   let shexiang = sessionStorage.getItem("isSheXiangs");
+    //   if (shexiang == "0") {
+    //     console.log(111);
+    //     setIsSheXiang(false);
+    //   } else {
+    //     setIsSheXiang(true);
+    //   }
+    // }
+    // if (sessionStorage.getItem("isYuYinStatus")) {
+    //   let yuyin = sessionStorage.getItem("isYuYinStatus");
+    //   if (yuyin == "0") {
+    //     console.log(111);
+    //     setIsyuyin(false);
+    //   } else {
+    //     setIsyuyin(true);
+    //   }
+    // }
     if (sessionStorage.getItem("ids")) {
       setMeetId(sessionStorage.getItem("ids") as any);
     }
@@ -134,12 +173,41 @@ export default function Index({}: Props) {
   };
   const yuyinStatus = () => {
     setIsyuyin(!isYuYin);
-  };
-  const shengyinStatus = () => {
-    setIsShengYin(!isShengYin);
+    console.log(isYuYin, "isYuYin");
+
+    // setState异步,所以这个拿到的值是上一次的，所以反着判断 1是开启 0是关闭
+    //判断是即时会议还是加入会议
+    if (isMeetingStatus == 1) {
+      if (!isYuYin) {
+        sessionStorage.setItem("joinYuyin", "1");
+      } else {
+        sessionStorage.setItem("joinYuyin", "0");
+      }
+    } else {
+      //此处是即时会议
+      if (!isYuYin) {
+        sessionStorage.setItem("openYuyin", "1");
+      } else {
+        sessionStorage.setItem("openYuyin", "0");
+      }
+    }
   };
   const shexiangStatus = () => {
     setIsSheXiang(!isSheXiang);
+    if (isMeetingStatus == 1) {
+      if (!isSheXiang) {
+        sessionStorage.setItem("joinShexiang", "1");
+      } else {
+        sessionStorage.setItem("joinShexiang", "0");
+      }
+    } else {
+      //此处是即时会议
+      if (!isSheXiang) {
+        sessionStorage.setItem("openShexiang", "1");
+      } else {
+        sessionStorage.setItem("openShexiang", "0");
+      }
+    }
   };
   const idChange = (e: any) => {
     setMeetId(e.target.value);
@@ -270,29 +338,6 @@ export default function Index({}: Props) {
                 </>
               )}
             </div>
-            {/* <div className="modal-icon-name-box">
-              {!isShengYin ? (
-                <>
-                  <img
-                    src={shengyinguan}
-                    alt=""
-                    className="modal-icons"
-                    onClick={shengyinStatus}
-                  />
-                  <div className="modal-icon-title">关闭扬声器</div>
-                </>
-              ) : (
-                <>
-                  <img
-                    src={shengyinkai}
-                    alt=""
-                    className="modal-icons"
-                    onClick={shengyinStatus}
-                  />
-                  <div className="modal-icon-title">开启扬声器</div>
-                </>
-              )}
-            </div> */}
           </div>
           <div className="modal-btn-box">
             <Button

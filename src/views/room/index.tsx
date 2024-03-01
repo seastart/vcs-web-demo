@@ -966,6 +966,9 @@ export default function Index({}: Props) {
       });
     if (args.type == 3) {
       setWhite(false);
+      setIsModalOpen(false);
+      setIsOptions(false);
+
       console.log(displayedMembersCurrent, "displayedMembersCurrent");
       //关闭小窗口成员的流
       if (args.accId == currentRooms.options.account.id) {
@@ -989,6 +992,7 @@ export default function Index({}: Props) {
         setIsClose(true); // 更新状态以关闭面板
         setIsZhanKai(true); // 更新状态以折叠视频面板
         setIsSheXiang(false);
+        setIsGongXiang(false);
         setMine(false);
         currentGx?.removePlay("videoDom", true);
         console.log(args, "args");
@@ -1007,16 +1011,18 @@ export default function Index({}: Props) {
         }
       }
     } else if (args.type == 1) {
+      console.log(isModalOpen, "isModalOpen");
+      setIsModalOpen(false);
       console.log(currentRooms.getRoom().sharing_type, "sharing_type");
       setIsVideoVisible(false);
       setIsClose(true); // 更新状态以关闭面板
       setIsZhanKai(true); // 更新状态以折叠视频面板
       setIsSheXiang(false);
       setWhite(true);
+      setIsGongXiang(false);
       setIsOptions(false);
 
       if (args.accId === currentRooms.options.account.id) {
-        setIsGongXiang(false);
         setMine(true);
       } else {
         setIsMine(false);
@@ -1765,6 +1771,10 @@ export default function Index({}: Props) {
   };
   //共享桌面
   const openModle = () => {
+    if (!isGongXiang) {
+      message.info("当前正在共享屏幕，请稍后在试");
+      return;
+    }
     rooms
       .openScreen({
         withDesktopAudio: false,
@@ -1801,6 +1811,10 @@ export default function Index({}: Props) {
   };
   //共享电子白板
   const openModleWhite = () => {
+    if (!isGongXiang) {
+      message.info("当前正在共享屏幕，请稍后在试");
+      return;
+    }
     console.log("共享电子白板");
     rooms.requestForSharing({
       st: 1,
@@ -1831,6 +1845,9 @@ export default function Index({}: Props) {
       console.log(canvas, "canvas");
       if (canvas) {
         // 逻辑处理
+        if (isModalOpen) {
+          setIsModalOpen(false);
+        }
         console.log(canvas, "canvas!!");
         rooms
           .openCustomStream({
