@@ -11,7 +11,6 @@ const { PersistGate } = require("redux-persist/integration/react");
 import "./App.css";
 import routes from "./routes";
 import { renderRoutes, RouteConfig } from "react-router-config";
-import vcsConfig from "@/vcsConfig.js";
 import { message } from "antd";
 function App() {
   useEffect(() => {
