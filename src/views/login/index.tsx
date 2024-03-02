@@ -19,17 +19,16 @@ export default function Index({}: Props) {
   console.log(vcs, "1111");
   const [isChecked, setIsChekced] = useState<Boolean>(false);
   const [vcss, setVcss] = useState(vcs);
-  useEffect(() => {
-    setVcss(vcs);
-  }, []);
+
+  useEffect(() => {}, []);
   //提交
   const onFinish = (values: any) => {
-    console.log("Success:", values);
+    console.log("vcss:", vcss);
     if (!isChecked) {
       message.info("请阅读并同意协议");
       return;
     }
-    vcss
+    vcs
       .login({
         loginname: values.username,
         password: values.password,

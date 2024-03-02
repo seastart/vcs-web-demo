@@ -11,23 +11,56 @@ const { PersistGate } = require("redux-persist/integration/react");
 import "./App.css";
 import routes from "./routes";
 import { renderRoutes, RouteConfig } from "react-router-config";
-
+import vcsConfig from "@/vcsConfig.js";
+import { message } from "antd";
 function App() {
   useEffect(() => {
-    console.log(process.env);
-    console.log(typeof process.env.REACT_APP_VCS_URL, "vcsUrl");
-    console.log(process.env.REACT_APP_CLIENT_ID, "clientId");
-    console.log(process.env.REACT_APP_CLIENT_SECRET, "clientSecret");
-
-    let vcsClient = new (VCS as any).VCSClient(
-      process.env.REACT_APP_VCS_URL,
-      process.env.REACT_APP_CLIENT_ID,
-      process.env.REACT_APP_CLIENT_SECRET
-    );
-    console.log(vcsClient, "vcsClient");
-    console.log((VCS as any).VERSION, "VERSION");
-    store.dispatch(setVersion((VCS as any).VERSION));
-    store.dispatch(setVCSClient(vcsClient));
+    console.log(process.env, "env");
+    // console.log(vcsConfig.vcsUrl, "vcsUrl");
+    // console.log(vcsConfig.clientId, "clientId");
+    // console.log(vcsConfig.clientSecret, "clientSecret");
+    if (sessionStorage.getItem("vcsUrl")) {
+      let vcsClient = new (VCS as any).VCSClient(
+        sessionStorage.getItem("vcsUrl"),
+        sessionStorage.getItem("clientId"),
+        sessionStorage.getItem("clientSecret")
+      );
+      console.log(vcsClient, "vcsClient");
+      console.log((VCS as any).VERSION, "VERSION");
+      store.dispatch(setVersion((VCS as any).VERSION));
+      store.dispatch(setVCSClient(vcsClient));
+    } else {
+      fetch(`${process.env.PUBLIC_URL}/vcsConfig.json`)
+        //默认返回response，response下有一个json方法可供使用
+        .then((response) => response.json())
+        .then((data) => {
+          // 处理返回的数据
+          console.log(data.vcsUrl, "rrr");
+          sessionStorage.setItem("vcsUrl", data.vcsUrl);
+          sessionStorage.setItem("clientId", data.clientId);
+          sessionStorage.setItem("clientSecret", data.clientSecret);
+          let vcsClient = new (VCS as any).VCSClient(
+            sessionStorage.getItem("vcsUrl")
+              ? sessionStorage.getItem("vcsUrl")
+              : data.vcsUrl,
+            sessionStorage.getItem("clientId")
+              ? sessionStorage.getItem("clientId")
+              : data.clientId,
+            sessionStorage.getItem("clientSecret")
+              ? sessionStorage.getItem("clientSecret")
+              : data.clientSecret
+          );
+          console.log(vcsClient, "vcsClient");
+          console.log((VCS as any).VERSION, "VERSION");
+          store.dispatch(setVersion((VCS as any).VERSION));
+          store.dispatch(setVCSClient(vcsClient));
+        })
+        .catch((error) => {
+          // 处理请求错误
+          console.log(error.message);
+          message.info(error.message);
+        });
+    }
   }, []);
   return (
     <Provider store={store}>

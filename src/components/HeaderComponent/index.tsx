@@ -48,6 +48,9 @@ export default function Index({}: Props) {
         sessionStorage.removeItem("nickname");
         message.success("退出登录成功");
         history.replace("/login");
+        // sessionStorage.removeItem("vcsUrl");
+        // sessionStorage.removeItem("clientId");
+        // sessionStorage.removeItem("clientSecret");
       })
       .catch((err: any) => {
         console.log(err, "退出登录报错");
