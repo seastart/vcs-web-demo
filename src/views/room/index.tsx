@@ -626,6 +626,11 @@ export default function Index({}: Props) {
       .catch((err: any) => {
         console.log(err, "err");
         // message.error(err.message);
+        if (err.message == "Failed to fetch") {
+          message.info("网络异常");
+          history.replace("/");
+          return;
+        }
         let errConfrim = confirm(err.message);
         if (errConfrim) {
           history.replace("/");
@@ -2319,7 +2324,6 @@ export default function Index({}: Props) {
               <Popover
                 content={gongxiangContent}
                 trigger="click"
-                onOpenChange={handleOpenChange}
               >
                 <DownOutlined
                   size={6}
