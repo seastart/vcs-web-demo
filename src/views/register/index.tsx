@@ -160,7 +160,7 @@ export default function Index({}: Props) {
                   },
                   {
                     pattern: new RegExp(
-                      /^(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{8,16}$/
+                      /^(?=.*[a-zA-Z\W])(?=.*\d)[\w\W]{8,16}$/
                     ),
                     message: "格式错误，密码由8-16位大/小写英文字母和数字组成",
                   },
@@ -185,7 +185,7 @@ export default function Index({}: Props) {
                   },
                   {
                     pattern: new RegExp(
-                      /^(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{8,16}$/
+                      /^(?=.*[a-zA-Z\W])(?=.*\d)[\w\W]{8,16}$/
                     ),
                     message: "格式错误，密码由8-16位大/小写英文字母和数字组成",
                   },
