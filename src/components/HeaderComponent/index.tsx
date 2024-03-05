@@ -105,16 +105,13 @@ export default function Index({}: Props) {
   const goVideo = (item: any) => {
     if (lu === 0) {
       vcs.listFile({ path: `/mcu/${item}`, limit: 100 }).then((res: any) => {
-        console.log(res, "res!!");
         setDatas(res.data.items);
         setLu(1);
-        console.log(item, "items");
         localStorage.setItem("playId", item);
       });
     } else {
       console.log(item);
       sessionStorage.setItem("VideoUrl", item.url);
-      console.log("我是jas");
       const newTab = window.open(
         `${window.location.origin}/demo/videoPlay?id=${encodeURIComponent(
           item.url

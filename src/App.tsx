@@ -15,9 +15,6 @@ import { message } from "antd";
 function App() {
   useEffect(() => {
     console.log(process.env, "env");
-    // console.log(vcsConfig.vcsUrl, "vcsUrl");
-    // console.log(vcsConfig.clientId, "clientId");
-    // console.log(vcsConfig.clientSecret, "clientSecret");
     if (sessionStorage.getItem("vcsUrl")) {
       let vcsClient = new (VCS as any).VCSClient(
         sessionStorage.getItem("vcsUrl"),

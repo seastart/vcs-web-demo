@@ -91,7 +91,7 @@ export default function Index({}: Props) {
         <div className="login-box-right">
           <div className="right-top-login">登录</div>
           <div className="right-top-register">
-            <div className="no-register">未注册</div>
+            <div className="no-register">未注册？</div>
             <div
               className="go-register"
               onClick={goRegister}

@@ -221,7 +221,7 @@ export default function Index({}: Props) {
       setPasName(e.target.value);
       sessionStorage.setItem("password", value);
     } else {
-      message.info("请输入4位数字");
+      // message.info("请输入4位数字");
     }
   };
   return (

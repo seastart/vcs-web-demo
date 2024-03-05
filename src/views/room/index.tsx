@@ -468,7 +468,6 @@ export default function Index({}: Props) {
               });
             });
         } else {
-          console.log("关闭！");
           setIsYuYin(false);
           // room.openAudio({}).then((a: any) => {
           //   setaa(a);
