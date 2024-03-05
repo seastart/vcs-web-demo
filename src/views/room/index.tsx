@@ -1954,7 +1954,7 @@ export default function Index({}: Props) {
         }}
         onClick={openModle}
       >
-        共享桌面
+        共享屏幕
       </div>
       <div
         style={{
@@ -2404,8 +2404,8 @@ export default function Index({}: Props) {
                       <div className="right-name">
                         <div className="name-top">
                           <div>
-                            {item.nickname}
-                            {index == 0 ? " (我自己)" : ""}
+                            <span>{item.nickname}</span>
+                            <span>{index == 0 ? " (我自己)" : ""}</span>
                           </div>
                           <div style={{ textAlign: "left" }}>
                             {item.role && item.role == 4

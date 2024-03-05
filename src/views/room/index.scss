@@ -284,7 +284,7 @@
   left: 13px !important;
   .ant-popover-content {
     .ant-popover-arrow-content::before {
-      background: rgba(0, 0, 0, 0.6) !important;
+      background: #fff !important;
     }
     .ant-popover-arrow {
       ::after {
@@ -294,11 +294,11 @@
       }
     }
     .ant-popover-inner {
-      background: rgba(0, 0, 0, 0.6) !important;
+      background: #fff !important;
       box-shadow: 0px 0px 9px 1px rgba(0, 0, 0, 0.11);
       border-radius: 4px 4px 4px 4px;
       .ant-popover-inner-content {
-        color: #fff;
+        color: #333;
       }
     }
   }

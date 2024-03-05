@@ -14,6 +14,8 @@
     height: 100%;
     display: flex;
     justify-content: center;
+    overflow-y: auto;
+    overflow-x: auto;
     .login-box-left {
       width: 502px;
       height: 548px;
