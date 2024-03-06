@@ -14,7 +14,7 @@ import { renderRoutes, RouteConfig } from "react-router-config";
 import { message } from "antd";
 function App() {
   useEffect(() => {
-    console.log(process.env, "env");
+    // console.log(process.env, "env");
     if (sessionStorage.getItem("vcsUrl")) {
       let vcsClient = new (VCS as any).VCSClient(
         sessionStorage.getItem("vcsUrl"),
@@ -60,10 +60,7 @@ function App() {
   }, []);
   return (
     <Provider store={store}>
-      <PersistGate
-        loading={null}
-        persistor={persistor}
-      >
+      <PersistGate loading={null} persistor={persistor}>
         <div className="App">{renderRoutes(routes as RouteConfig[])}</div>{" "}
       </PersistGate>
     </Provider>
