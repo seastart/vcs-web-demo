@@ -14,7 +14,7 @@ import { renderRoutes, RouteConfig } from "react-router-config";
 import { message } from "antd";
 function App() {
   useEffect(() => {
-    // console.log(process.env, "env");
+    console.log(process.env, "env");
     if (sessionStorage.getItem("vcsUrl")) {
       let vcsClient = new (VCS as any).VCSClient(
         sessionStorage.getItem("vcsUrl"),
