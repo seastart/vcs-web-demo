@@ -3,11 +3,12 @@
   height: 64px;
   background: linear-gradient(160deg, #e9f2ff 0%, #dee8ff 100%);
   .header-content {
-    width: 100%;
+    width: 1200px;
     height: 64px;
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
+    margin: 0 auto;
     .header-icon-box {
       width: 146px;
       height: 100%;

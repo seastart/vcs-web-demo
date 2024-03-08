@@ -68,7 +68,7 @@ export default function Index({}: Props) {
         //r.org         在企业里的组织
       })
       .catch((res: any) => {
-        console.log(res);
+        message.error(res.message);
       });
   };
   const sendCode = () => {

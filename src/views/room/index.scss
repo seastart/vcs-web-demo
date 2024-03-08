@@ -245,16 +245,16 @@
         }
       }
       .room-right-bottom {
-        height: 54px;
+        height: 68px;
         display: flex;
         align-items: center;
         justify-content: space-around;
         border: 1px solid rgba(0, 0, 0, 0.08);
 
         .right-bottom-button {
-          width: 176px;
+          width: 130px;
           height: 32px;
-          margin-bottom: 7px;
+          // margin-bottom: 7px;
           border-radius: 4px 4px 4px 4px;
         }
       }

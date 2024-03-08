@@ -42,6 +42,7 @@ import {
   Dropdown,
   Modal,
   Checkbox,
+  Popconfirm,
 } from "antd";
 import "./index.scss";
 import { debug } from "console";
@@ -127,6 +128,7 @@ export default function Index({}: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false); //设置弹窗开启
   const [streams, setStreams] = useState(new Map());
   const [chabaShexiangStatus, setChabaShexiangStatus] = useState(false); //插拔摄像头后禁止点击别人小窗口
+  const [openPopover, setOpenPopover] = useState(false); // 主持人 结束会议和离开会议放在一起
   const iframeRef = useRef(null); //获取canvas
   let ids = JSON.parse(sessionStorage.getItem("options") || "{}");
   let userId = sessionStorage.getItem("accid");
@@ -555,6 +557,7 @@ export default function Index({}: Props) {
       })
       .then((room: any) => {
         console.log(room, "room");
+        console.log("room.options.conf", room.options.conf);
         setRooms(room);
         setWebURL(room.options.wbPrefix); //存储共享白板链接
         store.dispatch(setRoom(room));
@@ -1897,9 +1900,9 @@ export default function Index({}: Props) {
   //顶部气泡弹窗
   const titleContent = (
     <div>
-      <p>会话ID: {id}</p>
-      <p>SDK版本: {version}</p>
-      <p>匹配版本: {version}</p>
+      <p>{nickname}的视频会议</p>
+      <p>会议ID: {id}</p>
+      <p>创建者: {nickname}</p>
     </div>
   );
   //底部气泡弹窗内容
@@ -1908,11 +1911,7 @@ export default function Index({}: Props) {
       <div style={{ color: "#999", fontSize: "14px", paddingBottom: "4px" }}>
         选择摄像头
       </div>
-      <Radio.Group
-        onChange={sheXiangChange}
-        value={valueTwo}
-        key={valueTwo}
-      >
+      <Radio.Group onChange={sheXiangChange} value={valueTwo} key={valueTwo}>
         <Space direction="vertical">
           {videoinput &&
             videoinput.length &&
@@ -1928,10 +1927,7 @@ export default function Index({}: Props) {
       <div style={{ color: "#999", fontSize: "14px", paddingBottom: "4px" }}>
         选择麦克风
       </div>
-      <Radio.Group
-        onChange={yuyinChange}
-        value={value}
-      >
+      <Radio.Group onChange={yuyinChange} value={value}>
         <Space direction="vertical">
           {audioinput &&
             audioinput.length &&
@@ -2054,45 +2050,26 @@ export default function Index({}: Props) {
               trigger="hover"
               overlayClassName="top-pvpover"
             >
-              <img
-                src={topPng}
-                alt=""
-                className="top-left-img"
-              />
+              <img src={topPng} alt="" className="top-left-img" />
             </Popover>
             <div className="left-top-text">会议ID：{id}</div>
           </div>
           <div className="video-box">
             {!white ? (
-              <div
-                className="video"
-                id="videoDom"
-              >
+              <div className="video" id="videoDom">
                 <div
                   className="video-box-flex"
                   style={{ display: isVideoVisible ? "block" : "none" }}
                 >
                   <div className="video-avatar">
-                    <Avatar
-                      icon={<UserOutlined />}
-                      size={100}
-                    />
+                    <Avatar icon={<UserOutlined />} size={100} />
                   </div>
                   <div className="video-icon-box">
-                    <img
-                      src={smallGuanShiPin}
-                      alt=""
-                    />
+                    <img src={smallGuanShiPin} alt="" />
                     {isYuYin ? (
-                      <img
-                        src={smallKaiYuYin}
-                        alt=""
-                      />
+                      <img src={smallKaiYuYin} alt="" />
                     ) : (
-                      <img
-                        src={smallGuanYuYin}
-                        alt=""
-                      />
+                      <img src={smallGuanYuYin} alt="" />
                     )}
 
                     <span>{selectedData.nickname}</span>
@@ -2127,14 +2104,8 @@ export default function Index({}: Props) {
             )}
 
             {iszhankai ? (
-              <div
-                className="video-shou"
-                onClick={zhankaiStatus}
-              >
-                <img
-                  src={shouqiIcon}
-                  alt=""
-                />
+              <div className="video-shou" onClick={zhankaiStatus}>
+                <img src={shouqiIcon} alt="" />
               </div>
             ) : (
               ""
@@ -2148,14 +2119,8 @@ export default function Index({}: Props) {
               }}
             >
               {!iszhankai ? (
-                <div
-                  className="video-shou"
-                  onClick={zhankaiStatus}
-                >
-                  <img
-                    src={zhankaiIcon}
-                    alt=""
-                  />
+                <div className="video-shou" onClick={zhankaiStatus}>
+                  <img src={zhankaiIcon} alt="" />
                 </div>
               ) : (
                 ""
@@ -2188,24 +2153,15 @@ export default function Index({}: Props) {
                         >
                           {data.video_state && data.video_state !== 0 ? (
                             <div className="item-avatar">
-                              <Avatar
-                                icon={<UserOutlined />}
-                                size={40}
-                              />
+                              <Avatar icon={<UserOutlined />} size={40} />
                             </div>
                           ) : null}
 
                           <div className="item-right-bottom">
                             {data.audio_state && data.audio_state == "1" ? (
-                              <img
-                                src={smallGuanYuYin}
-                                alt=""
-                              />
+                              <img src={smallGuanYuYin} alt="" />
                             ) : (
-                              <img
-                                src={smallKaiYuYin}
-                                alt=""
-                              />
+                              <img src={smallKaiYuYin} alt="" />
                             )}
 
                             <span>{data.nickname}</span>
@@ -2245,11 +2201,7 @@ export default function Index({}: Props) {
                 </div>
               ) : (
                 <div className="img-box-bottom">
-                  <img
-                    src={yuyinguan}
-                    alt=""
-                    onClick={yuyinStatus}
-                  />
+                  <img src={yuyinguan} alt="" onClick={yuyinStatus} />
                   <div>解除静音</div>
                 </div>
               )}
@@ -2265,20 +2217,12 @@ export default function Index({}: Props) {
               </Popover>
               {isSheXiang ? (
                 <div className="img-box-bottom">
-                  <img
-                    src={shipinkai}
-                    alt=""
-                    onClick={shipinStatus}
-                  />
+                  <img src={shipinkai} alt="" onClick={shipinStatus} />
                   <div>关闭视频</div>
                 </div>
               ) : (
                 <div className="img-box-bottom">
-                  <img
-                    src={shipinguan}
-                    alt=""
-                    onClick={shipinStatus}
-                  />
+                  <img src={shipinguan} alt="" onClick={shipinStatus} />
                   <div>开启视频</div>
                 </div>
               )}
@@ -2294,36 +2238,21 @@ export default function Index({}: Props) {
               </Popover>
               {!isGongXiang && !mine ? (
                 <div className="img-box-bottom">
-                  <img
-                    src={gongxiangIcon}
-                    alt=""
-                  />
+                  <img src={gongxiangIcon} alt="" />
                   <div>共享中</div>
                 </div>
               ) : !isGongXiang && mine ? (
-                <div
-                  className="img-box-bottom"
-                  onClick={stopShare}
-                >
-                  <img
-                    src={gongxiangguanIcon}
-                    alt=""
-                  />
+                <div className="img-box-bottom" onClick={stopShare}>
+                  <img src={gongxiangguanIcon} alt="" />
                   <div>停止共享</div>
                 </div>
               ) : (
                 <div className="img-box-bottom">
-                  <img
-                    src={gongxiangIcon}
-                    alt=""
-                  />
+                  <img src={gongxiangIcon} alt="" />
                   <div>屏幕共享</div>
                 </div>
               )}
-              <Popover
-                content={gongxiangContent}
-                trigger="click"
-              >
+              <Popover content={gongxiangContent} trigger="click">
                 <DownOutlined
                   size={6}
                   style={{ marginTop: "-20px", marginLeft: "-10px" }}
@@ -2341,65 +2270,74 @@ export default function Index({}: Props) {
                 />
               </Dropdown> */}
               <div className="img-box-bottom">
-                <img
-                  src={chengyuanIcon}
-                  alt=""
-                  onClick={closeRight}
-                />
+                <img src={chengyuanIcon} alt="" onClick={closeRight} />
                 <div>成员({data.length}人)</div>
               </div>
               <div className="img-box-bottom">
-                <img
-                  src={shezhiIcon}
-                  alt=""
-                  onClick={optionsModal}
-                />
+                <img src={shezhiIcon} alt="" onClick={optionsModal} />
                 <div>设置</div>
               </div>
             </div>
-            {data && data.length && data[0].role !== 0 ? (
+            {data?.[0]?.role !== 0 ? (
+              <Popover
+                placement="top"
+                content={
+                  <div>
+                    <div style={{marginBottom:'12px'}}>
+                      <Button
+                        className="left-bottom-right"
+                        type="primary"
+                        danger
+                        onClick={overMute}
+                      >
+                        结束会议
+                      </Button>
+                    </div>
+                    <div>
+                      <Button
+                        className="left-bottom-right"
+                        danger
+                        onClick={overMutes}
+                      >
+                        退出会议
+                      </Button>
+                    </div>
+                  </div>
+                }
+                trigger="click"
+                open={openPopover}
+                onOpenChange={setOpenPopover}
+              >
+                <Button danger={!openPopover} style={{marginRight:'20px',width:'88px'}}>
+                  {openPopover ? "取 消" : "结束会议"}
+                </Button>
+              </Popover>
+            ) : (
               <Button
                 className="left-bottom-right"
                 type="primary"
-                onClick={overMute}
+                onClick={overMutes}
               >
-                结束会议
+                退出会议
               </Button>
-            ) : null}
-
-            <Button
-              className="left-bottom-right"
-              type="primary"
-              onClick={overMutes}
-            >
-              退出会议
-            </Button>
+            )}
           </div>
         </div>
         <div className="room-right-box">
           <div className="room-right-top">
             <div className="right-top-text">参会人员</div>
-            <div
-              className="right-top-close"
-              onClick={closeRight}
-            >
+            <div className="right-top-close" onClick={closeRight}>
               x
             </div>
           </div>
           <div className="room-right-content">
             {data &&
-              data.length &&
+              data.length > 0 &&
               data.map((item: any, index: any) => {
                 if (typeof item === "object" && item !== null) {
                   return (
-                    <div
-                      className="right-name-box"
-                      key={index}
-                    >
-                      <Avatar
-                        icon={<UserOutlined />}
-                        size={40}
-                      />
+                    <div className="right-name-box" key={index}>
+                      <Avatar icon={<UserOutlined />} size={40} />
                       <div className="right-name">
                         <div className="name-top">
                           <div>
@@ -2418,26 +2356,14 @@ export default function Index({}: Props) {
                       </div>
                       <div className="right-icon">
                         {item.audio_state == 0 ? (
-                          <img
-                            src={smallyuyinkaiIcon}
-                            alt=""
-                          />
+                          <img src={smallyuyinkaiIcon} alt="" />
                         ) : (
-                          <img
-                            src={smallyuyinguanIcon}
-                            alt=""
-                          />
+                          <img src={smallyuyinguanIcon} alt="" />
                         )}
                         {item.video_state == 0 ? (
-                          <img
-                            src={smallshexiangkaiIcon}
-                            alt=""
-                          />
+                          <img src={smallshexiangkaiIcon} alt="" />
                         ) : (
-                          <img
-                            src={smallshexiangguanIcon}
-                            alt=""
-                          />
+                          <img src={smallshexiangguanIcon} alt="" />
                         )}
                         {/* <img
                   src={shanchengyuan}
@@ -2455,7 +2381,7 @@ export default function Index({}: Props) {
                 className="right-bottom-button"
                 onClick={allMute}
                 disabled={
-                  data && data.length && data[0].role !== 0 ? false : true
+                  data && data.length > 0 && data[0].role !== 0 ? false : true
                 }
               >
                 全体静音
@@ -2464,7 +2390,7 @@ export default function Index({}: Props) {
                 className="right-bottom-button"
                 onClick={allUnMute}
                 disabled={
-                  data && data.length && data[0].role !== 0 ? false : true
+                  data && data.length > 0 && data[0].role !== 0 ? false : true
                 }
               >
                 解除全体静音
@@ -2499,10 +2425,7 @@ export default function Index({}: Props) {
               {/* <div className="option-right-item">
                 <Checkbox onChange={optionTalk}>视频镜像效果</Checkbox>
               </div> */}
-              <div
-                className="option-right-item"
-                style={{ fontSize: "16px" }}
-              >
+              <div className="option-right-item" style={{ fontSize: "16px" }}>
                 共享屏幕分辨率
               </div>
               <div className="option-right-item">
@@ -2515,18 +2438,12 @@ export default function Index({}: Props) {
                 </Radio.Group>
               </div>
               <div className="option-right-item">
-                <Checkbox
-                  onChange={optionTalk}
-                  checked={lu}
-                >
+                <Checkbox onChange={optionTalk} checked={lu}>
                   开启云录制
                 </Checkbox>
               </div>
               <div className="option-right-item">
-                <Checkbox
-                  onChange={optionTalks}
-                  checked={mirror}
-                >
+                <Checkbox onChange={optionTalks} checked={mirror}>
                   开启镜像
                 </Checkbox>
               </div>
